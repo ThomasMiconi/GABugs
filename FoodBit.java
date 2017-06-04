@@ -1,21 +1,16 @@
 import java.util.Random;
-public class FoodBit{
-    double x;
-    double y;
+public class FoodBit extends Item{
     double speedy;
     double speedx;
     World w;
     Random R;
     FoodBit(World myw)
     {
+        super(myw);
         w = myw;
         R = w.R;
         speedx=0.0;
         speedy=0.0;
-        x = R.nextDouble() * w.WSIZE;
-        y = R.nextDouble() * w.WSIZE;
-    }
-    public void randPos(){
         x = R.nextDouble() * w.WSIZE;
         y = R.nextDouble() * w.WSIZE;
     }

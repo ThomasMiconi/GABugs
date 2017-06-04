@@ -6,7 +6,7 @@ public class Population{
     Population(World ww){
         myworld = ww;
         POPSIZE = ww.POPSIZE;
-        pop = new Agent[POPSIZE]; for (int nn=0; nn< pop.length; nn++) pop[nn] = new Agent(myworld);
+        pop = new Agent[POPSIZE]; for (int nn=0; nn< pop.length; nn++) pop[nn] = new Agent(myworld, nn);
     }
     public void update(){
             for (int n=0; n < pop.length; n++)
@@ -29,7 +29,7 @@ public class Population{
             //G.fillArc((int)(myWorld.pop[n].x), (int)myWorld.pop[n].y, 20, 20, (int)Math.toDegrees(myWorld.pop[n].heading), 40); // Doesn't really work
             G.fillOval((int)(pop[n].x)-3, (int)pop[n].y-3, 7, 7);
             G.fillOval((int)(pop[n].x + 6 * Math.cos(pop[n].heading))-1, 
-                       (int)(pop[n].y + 6 * Math.sin(pop[n].heading))-1, 
+                       (int)(pop[n].y - 6 * Math.sin(pop[n].heading))-1, // minus to preserve counterclockwise (trigonometric) heading when y grows downwards..
                         2,2);
 
         }
@@ -52,11 +52,7 @@ public class Population{
     }
     public void initialize(){
         for (int n=0; n < pop.length; n++)
-        {
-            pop[n].randPos();
-            pop[n].resetNeurons();
-            pop[n].resetScore();
-        }
+            pop[n].initialize();
     }
     public void mutate(){
         // Clonal!

@@ -1,8 +1,7 @@
 import java.util.Random;
-public class Agent{
-    double x;
-    double y;
+public class Agent extends Item{
     int score;
+    int num;
     Random R;
     double rotation;
     double speed;
@@ -12,9 +11,11 @@ public class Agent{
     double[][] w;
     double[] neury, neurx;
     double dtdivtau = 1.0 / 30.0;
-    Agent(World myw)
+    Agent(World myw, int myn)
     {
+        super(myw);
         myworld = myw;
+        num = myn;
         R = myworld.R;
         score=0;
         NBNEUR = myworld.NBNEUR; 
@@ -28,8 +29,6 @@ public class Agent{
         speed=0.0;
         rotation=0.0;
         heading = R.nextDouble() * 2 * Math.PI;
-        x = R.nextDouble() * WSIZE;
-        y = R.nextDouble() * WSIZE;
     }
     public void randomizeNet(){
         for (int ii=0; ii < NBNEUR; ii++)
@@ -49,15 +48,25 @@ public class Agent{
             for (int jj=0; jj < NBNEUR; jj++)
                 w[ii][jj] = A.w[ii][jj];
     }
+    public void initialize()
+    {
+            randPos();
+            resetNeurons();
+            resetScore();
+    }
     public void fillSensors()
     {
-        neury[2] = 2.0 * R.nextDouble() - 1.0;
+        neury[2] = 0.0;
+        for (int n=0; n < myworld.FOODSIZE; n++)
+        {
+            if (n == num) 
+                continue;
+            double angle = getAngleFrom(myworld.food[n]);
+            if ((angle-heading < .15) && (angle-heading > -.15))
+                neury[2] += 1.0 / (1.0 + .1 * getDistanceFrom(myworld.food[n]));
+        }
         neury[3] = 2.0 * R.nextDouble() - 1.0;
         neury[4] = 1.0;
-    }
-    public void randPos(){
-        x = R.nextDouble() * WSIZE;
-        y = R.nextDouble() * WSIZE;
     }
     public void runNetwork()
     {
@@ -87,7 +96,34 @@ public class Agent{
     }
     public void update()
     {
-        fillSensors();
+        double dist, angle;
+        neury[4] = 2.0 * R.nextDouble() - 1.0;
+        neury[5] = 1.0;
+        neury[2] = 0.0; neury[3] = 0.0;
+        for (int n=0; n < myworld.FOODSIZE; n++)
+        {
+            dist = getDistanceFrom(myworld.food[n]);
+            //System.out.println(dist);
+            if (dist < 10.0) //  myworld.EATRADIUS) //Eat !
+            {
+                    increaseScore();
+                    myworld.food[n].randPos(); 
+            }
+            else
+            {
+                angle = getAngleFrom(myworld.food[n]);
+                if ((angle-heading < 3.0) && (angle-heading > 0))
+                    neury[2] += 1.0 / (1.0 + .1 * dist);
+                if ((angle-heading > -3.0) && (angle-heading < 0))
+                    neury[3] += 1.0 / (1.0 + .1 * dist);
+                //System.out.println(angle - heading);
+            }
+
+        }
+        /*if (neury[2] > .1)
+            System.out.println("Left");
+        if (neury[3] > .1)
+            System.out.println("Right");*/
         runNetwork();
         speed = myworld.AGENTSPEED * (1.0 + neury[0]) / 2.0;
         rotation = myworld.AGENTANGULARSPEED * neury[1];
@@ -95,7 +131,7 @@ public class Agent{
         if (heading < 0) heading += 2 * Math.PI;
         if (heading > 2 * Math.PI) heading -= 2 * Math.PI;
         x += speed * Math.cos(heading);
-        y += speed * Math.sin(heading);
+        y -= speed * Math.sin(heading);
         if (y > myworld.WSIZE)
             y -= myworld.WSIZE;
         if (y < 0)
