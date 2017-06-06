@@ -1,3 +1,6 @@
+// This class controls the agents.
+// NOTE: Much of the spatial logic is inherited from class Item!
+
 import java.util.Random;
 public class Agent extends Item{
     int score;
@@ -33,7 +36,7 @@ public class Agent extends Item{
     public void randomizeNet(){
         for (int ii=0; ii < NBNEUR; ii++)
             for (int jj=0; jj < NBNEUR; jj++)
-                w[ii][jj] = 2.0 * R.nextDouble() - 1.0;
+                w[ii][jj] = (2.0 * R.nextDouble() - 1.0) ;
     }
     public void resetNeurons() { 
         for (int n=0; n<NBNEUR; n++){
@@ -53,20 +56,6 @@ public class Agent extends Item{
             randPos();
             resetNeurons();
             resetScore();
-    }
-    public void fillSensors()
-    {
-        neury[2] = 0.0;
-        for (int n=0; n < myworld.FOODSIZE; n++)
-        {
-            if (n == num) 
-                continue;
-            double angle = getAngleFrom(myworld.food[n]);
-            if ((angle-heading < .15) && (angle-heading > -.15))
-                neury[2] += 1.0 / (1.0 + .1 * getDistanceFrom(myworld.food[n]));
-        }
-        neury[3] = 2.0 * R.nextDouble() - 1.0;
-        neury[4] = 1.0;
     }
     public void runNetwork()
     {
@@ -94,17 +83,20 @@ public class Agent extends Item{
                     w[ii][jj] = -myworld.MAXW;
             }
     }
+
+    // This function controls the agent's behavior.
     public void update()
     {
         double dist, angle;
         neury[4] = 2.0 * R.nextDouble() - 1.0;
         neury[5] = 1.0;
         neury[2] = 0.0; neury[3] = 0.0;
+        // Check where the food bits are, whether we have eaten one, and fill
+        // the sensors with appropriate values:
         for (int n=0; n < myworld.FOODSIZE; n++)
         {
-            dist = getDistanceFrom(myworld.food[n]);
-            //System.out.println(dist);
-            if (dist < 10.0) //  myworld.EATRADIUS) //Eat !
+            dist = getDistanceFrom(myworld.food[n]); // getDistanceFrom and getAngleFrom are from ancestor class Item
+            if (dist < myworld.EATRADIUS)  // Eaten!
             {
                     increaseScore();
                     myworld.food[n].randPos(); 
@@ -116,15 +108,11 @@ public class Agent extends Item{
                     neury[2] += 1.0 / (1.0 + .1 * dist);
                 if ((angle-heading > -3.0) && (angle-heading < 0))
                     neury[3] += 1.0 / (1.0 + .1 * dist);
-                //System.out.println(angle - heading);
             }
 
         }
-        /*if (neury[2] > .1)
-            System.out.println("Left");
-        if (neury[3] > .1)
-            System.out.println("Right");*/
-        runNetwork();
+        runNetwork(); // Runs the neural network.
+        // Determine motion based on neural network outputs:
         speed = myworld.AGENTSPEED * (1.0 + neury[0]) / 2.0;
         rotation = myworld.AGENTANGULARSPEED * neury[1];
         heading += rotation;
@@ -140,7 +128,6 @@ public class Agent extends Item{
             x -= myworld.WSIZE;
         if (x < 0)
             x += myworld.WSIZE;
-        
     }
 
 }

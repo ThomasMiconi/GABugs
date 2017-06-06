@@ -1,6 +1,8 @@
 import java.awt.*;  
 import java.awt.event.*;  
 import java.util.Random;
+
+// The canvas on which we will draw the world
 class MyCanvas extends Canvas{
     World myWorld;
     public MyCanvas(World tt) {  
@@ -9,16 +11,18 @@ class MyCanvas extends Canvas{
         setSize(tt.WSIZE, tt.WSIZE);  
     }  
     public void paint(Graphics G){
-        G.setColor(Color.green);
-        G.fillOval(10, 50, 10, 10);
+        // This green oval is there for no reason at all.
+        G.setColor(Color.green); G.fillOval(10, 50, 20, 10);
         G.setColor(Color.black);
         for (int n=0; n < myWorld.food.length; n++)
             G.fillOval((int)(myWorld.food[n].x), (int)myWorld.food[n].y, 4, 4);
-        G.setColor(Color.red);
-        myWorld.pop.draw(G);
+        myWorld.pop.draw(G); // Population of agents can draw itself.
     }
 }
 
+// The World class is the overall controller and also implements the View (w/ MyCanvas).
+// While it defines the overall algorithm, much of the actual logic occurs in
+// classes Agent and FoodItem.
 public class World extends Frame implements ActionListener, Runnable{
     TextField tf1;
     Label scorelabel;
@@ -32,19 +36,17 @@ public class World extends Frame implements ActionListener, Runnable{
     double FOODSPEED = 1.0, 
            AGENTSPEED = 5.0, 
            AGENTANGULARSPEED = .25, 
-           EATRADIUS = 3.0,
-           EATRADIUSSQ = EATRADIUS * EATRADIUS,
-           //MUTATIONSCALEFACTOR =  .1,
+           EATRADIUS = 10.0,
            PROBAMUT = .05,
            MAXW = 10.0;
     FoodBit[] food;
     Population pop, bestpop;
-    int score, bestscore;
+    int bestscore;
     int numgen;
     protected Thread thrd;
     World(){ 
+        // Initializations and graphics setup...
         R = new Random(0);
-        score = 0; bestscore=0;
         pop = new Population(this);
         bestpop = new Population(this);
         scorelabel = new Label(); scorelabel.setPreferredSize(new Dimension(100, 25));
@@ -71,7 +73,8 @@ public class World extends Frame implements ActionListener, Runnable{
         thrd.start();
     }         
 
-    public void actionPerformed(ActionEvent e) {  
+    public void actionPerformed(ActionEvent e) {
+        // The buttons control the waiting delay between refreshes.
         if(e.getSource()==b1){  
             delay+=50;  
         }else if(e.getSource()==b2){  
@@ -85,6 +88,7 @@ public class World extends Frame implements ActionListener, Runnable{
     }  
 
     
+    // The actual evolutionary algorithm!
     public void run()
     {
         numgen = 0;
@@ -92,16 +96,21 @@ public class World extends Frame implements ActionListener, Runnable{
         bestscore = -1;
         while (true)
         {
+            // Every new candidate is a mutated copy of the current best-ever population.
             if (numgen > 0)
-                pop.copyFrom(bestpop);
+                pop.copyFrom(bestpop);  
             pop.mutate();
             pop.initialize();
+            // Evaluation :
             for (int numstep=0; numstep < NBSTEPSPERGEN; numstep++)
             {
                 for (int n=0; n < food.length; n++)
                     food[n].update();
-                pop.update();
+                pop.update(); // Takes care of sensors, network update, score update, motion, etc.
 
+                // We need a delay between refreshes if we want to see what's going on...
+                // But we can set it to 0 (with the buttons) if we just want
+                // the algorithm to proceed fast.
                 try{ Thread.sleep(delay); }
                 catch ( InterruptedException e )
                 {
@@ -111,11 +120,10 @@ public class World extends Frame implements ActionListener, Runnable{
                 scorelabel.setText("Score: "+pop.getTotalScore());
             }
             score = pop.getTotalScore();
-            //Sys/tem.out.println("Gen done, score = "+score);
             System.out.println(score);
             if (score > bestscore)
             {
-                //System.out.println("Best score!");
+                // We have a new champion!
                 bestpop.copyFrom(pop);
                 bestscore = score;
             }
