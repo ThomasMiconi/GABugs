@@ -1,5 +1,5 @@
 import java.awt.*;  
-public class Population{
+public class Population implements Comparable<Population>{
     Agent[] pop;
     int POPSIZE, NBNEUR;
     World myworld;
@@ -11,6 +11,10 @@ public class Population{
     public void update(){
             for (int n=0; n < pop.length; n++)
                 pop[n].update();
+    }
+    public int compareTo(Population o)
+    {
+        return Integer.signum(getTotalScore() - o.getTotalScore());
     }
     public int getTotalScore()
     {
@@ -25,6 +29,7 @@ public class Population{
             pop[n].resetScore();
     }
     public void draw(Graphics G){
+        G.setColor(Color.red);
         for (int n=0; n < pop.length; n++){
             //G.fillArc((int)(myWorld.pop[n].x), (int)myWorld.pop[n].y, 20, 20, (int)Math.toDegrees(myWorld.pop[n].heading), 40); // Doesn't really work
             G.fillOval((int)(pop[n].x)-3, (int)pop[n].y-3, 7, 7);

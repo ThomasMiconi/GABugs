@@ -1,6 +1,8 @@
 import java.awt.*;  
 import java.awt.event.*;  
 import java.util.Random;
+import java.util.ArrayList;
+import java.util.Collections;
 
 // The canvas on which we will draw the world
 class MyCanvas extends Canvas{
@@ -32,6 +34,8 @@ public class World extends Frame implements ActionListener, Runnable{
     int delay, FOODSIZE = 10, 
         POPSIZE = 5, 
         WSIZE = 350,  NBSTEPSPERGEN = 10000,
+           NBPOPS = 20,
+           NBBEST = 4, 
         NBNEUR = 20;
     double FOODSPEED = 1.0, 
            AGENTSPEED = 5.0, 
@@ -41,6 +45,7 @@ public class World extends Frame implements ActionListener, Runnable{
            MAXW = 10.0;
     FoodBit[] food;
     Population pop, bestpop;
+    ArrayList<Population>  pops;
     int bestscore;
     int numgen;
     protected Thread thrd;
@@ -48,6 +53,9 @@ public class World extends Frame implements ActionListener, Runnable{
         // Initializations and graphics setup...
         R = new Random(0);
         pop = new Population(this);
+        pops = new ArrayList<Population>();
+        for (int i=0; i<NBPOPS; i++) 
+            pops.add(new Population(this));
         bestpop = new Population(this);
         scorelabel = new Label(); scorelabel.setPreferredSize(new Dimension(100, 25));
         delay = 100;
@@ -55,7 +63,7 @@ public class World extends Frame implements ActionListener, Runnable{
         tf1=new TextField();  
         tf1.setText(Integer.toString(delay));
         b1=new Button("+"); b2=new Button("-"); b3=new Button("O");
-        scorelabel.setText("Score: "+score);
+        scorelabel.setText("Score: 0");
         b1.addActionListener(this); b2.addActionListener(this); b3.addActionListener(this); 
         add(tf1);add(b1);add(b2); add(scorelabel); // add(b3);
         cnv = new MyCanvas(this);
@@ -92,40 +100,43 @@ public class World extends Frame implements ActionListener, Runnable{
     public void run()
     {
         numgen = 0;
-        pop.randomizeNets();
-        bestscore = -1;
+        for (int i=0; i<NBPOPS; i++) pops.get(i).randomizeNets();
         while (true)
         {
-            // Every new candidate is a mutated copy of the current best-ever population.
-            if (numgen > 0)
-                pop.copyFrom(bestpop);  
-            pop.mutate();
-            pop.initialize();
-            // Evaluation :
-            for (int numstep=0; numstep < NBSTEPSPERGEN; numstep++)
+            // This re-evaluates the champions, even though we already know their score! OTOH, score evaluation is quite noisy...
+            for (int numpop=0; numpop < NBPOPS; numpop++)
             {
-                for (int n=0; n < food.length; n++)
-                    food[n].update();
-                pop.update(); // Takes care of sensors, network update, score update, motion, etc.
-
-                // We need a delay between refreshes if we want to see what's going on...
-                // But we can set it to 0 (with the buttons) if we just want
-                // the algorithm to proceed fast.
-                try{ Thread.sleep(delay); }
-                catch ( InterruptedException e )
+                pop.copyFrom(pops.get(numpop));
+                pop.initialize();
+                // Evaluation :
+                for (int numstep=0; numstep < NBSTEPSPERGEN; numstep++)
                 {
-                    System.out.println ( "Exception: " + e.getMessage() );
-                }        
-                cnv.repaint();
-                scorelabel.setText("Score: "+pop.getTotalScore());
+                    for (int n=0; n < food.length; n++)
+                        food[n].update();
+                    pop.update(); // Takes care of sensors, network update, score update, motion, etc.
+
+                    // We need a delay between refreshes if we want to see what's going on...
+                    // But we can set it to 0 (with the buttons) if we just want
+                    // the algorithm to proceed fast.
+                    try{ Thread.sleep(delay); }
+                    catch ( InterruptedException e )
+                    {
+                        System.out.println ( "Exception: " + e.getMessage() );
+                    }        
+                    cnv.repaint();
+                    scorelabel.setText("Score: "+pop.getTotalScore());
+                }
+                pops.get(numpop).copyFrom(pop); // Mostly to get back the total score.
             }
-            score = pop.getTotalScore();
-            System.out.println(score);
-            if (score > bestscore)
+            Collections.sort(pops); // This will sort pops by ascending order of the scores, because Population implements Comparable.
+            Collections.reverse(pops); // We want descending order.
+            bestscore = pops.get(0).getTotalScore();
+            //System.out.println("Gen "+numgen+": "+bestscore+" "+pops.get(1).getTotalScore());
+            System.out.println(bestscore);
+            for (int n=NBBEST; n<NBPOPS; n++)
             {
-                // We have a new champion!
-                bestpop.copyFrom(pop);
-                bestscore = score;
+                pops.get(n).copyFrom(pops.get(R.nextInt(NBBEST)));
+                pops.get(n).mutate();
             }
             numgen ++;
         }

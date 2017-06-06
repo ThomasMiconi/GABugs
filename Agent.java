@@ -47,6 +47,7 @@ public class Agent extends Item{
     public void resetScore() { score = 0; } 
     public void increaseScore() { score ++; } 
     public void copyFrom(Agent A){
+        score = A.score;
         for (int ii=0; ii < NBNEUR; ii++)
             for (int jj=0; jj < NBNEUR; jj++)
                 w[ii][jj] = A.w[ii][jj];
