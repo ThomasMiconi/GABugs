@@ -9,39 +9,47 @@ class MyCanvas extends Canvas{
     World myWorld;
     public MyCanvas(World tt) {  
         myWorld = tt;
-        setBackground (Color.blue);  
+        setBackground (Color.gray);  
         setSize(tt.WSIZE, tt.WSIZE);  
     }  
     public void paint(Graphics G){
-        // This green oval is there for no reason at all.
+        // The green oval is there for no reason at all.
         G.setColor(Color.green); G.fillOval(10, 50, 20, 10);
-        G.setColor(Color.black);
-        for (int n=0; n < myWorld.food.length; n++)
+        for (int n=0; n < myWorld.food.length; n++){
+
+            if ( (n < myWorld.FOODSIZE /2  && myWorld.POISONFIRSTHALF == 1) || (n >= myWorld.FOODSIZE /2  && myWorld.POISONFIRSTHALF == 0) ) 
+                G.setColor(Color.white);
+            else
+                G.setColor(Color.black);
             G.fillOval((int)(myWorld.food[n].x), (int)myWorld.food[n].y, 4, 4);
+        }
         myWorld.pop.draw(G); // Population of agents can draw itself.
     }
 }
 
 // The World class is the overall controller and also implements the View (w/ MyCanvas).
 // While it defines the overall algorithm, much of the actual logic occurs in
-// classes Agent and FoodItem.
+// classes Agent, Item, Population and FoodItem.
 public class World extends Frame implements ActionListener, Runnable{
     TextField tf1;
     Label scorelabel;
     Button b1,b2, b3; 
     Random R;
     MyCanvas cnv;
-    int delay, FOODSIZE = 10, 
-        POPSIZE = 5, 
-        WSIZE = 350,  NBSTEPSPERGEN = 10000,
-           NBPOPS = 20,
-           NBBEST = 4, 
-        NBNEUR = 20;
+    int delay=0, FOODSIZE = 10, 
+        POPSIZE = 4, 
+        WSIZE = 350,  NBSTEPSPERGEN = 20000,
+           NBPOPS = 200,
+           NBBEST = 40, 
+           SEED = 0,
+           POISONFIRSTHALF = 1, // Half of the foodbits are poison; is it 1st or 2nd half?
+        NBNEUR = 30; // 20;
     double FOODSPEED = 1.0, 
            AGENTSPEED = 5.0, 
-           AGENTANGULARSPEED = .25, 
+           AGENTANGULARSPEED = .3, 
            EATRADIUS = 10.0,
            PROBAMUT = .05,
+           TAU = 5.0,
            MAXW = 10.0;
     FoodBit[] food;
     Population pop, bestpop;
@@ -51,14 +59,13 @@ public class World extends Frame implements ActionListener, Runnable{
     protected Thread thrd;
     World(){ 
         // Initializations and graphics setup...
-        R = new Random(0);
+        R = new Random(SEED);
         pop = new Population(this);
         pops = new ArrayList<Population>();
         for (int i=0; i<NBPOPS; i++) 
             pops.add(new Population(this));
         bestpop = new Population(this);
         scorelabel = new Label(); scorelabel.setPreferredSize(new Dimension(100, 25));
-        delay = 100;
         food = new FoodBit[FOODSIZE]; for (int nn=0; nn< food.length; nn++) food[nn] = new FoodBit(this);
         tf1=new TextField();  
         tf1.setText(Integer.toString(delay));
@@ -73,7 +80,6 @@ public class World extends Frame implements ActionListener, Runnable{
                 System.exit ( 0 );
             }
         } );
-        //setSize(1000,1000);  
         setLayout(new FlowLayout());  
         pack();
         setVisible(true);  
@@ -103,14 +109,17 @@ public class World extends Frame implements ActionListener, Runnable{
         for (int i=0; i<NBPOPS; i++) pops.get(i).randomizeNets();
         while (true)
         {
-            // This re-evaluates the champions, even though we already know their score! OTOH, score evaluation is quite noisy...
+            // This re-evaluates the champion populations, even though we already know their score! OTOH, score evaluation is quite noisy...
             for (int numpop=0; numpop < NBPOPS; numpop++)
             {
                 pop.copyFrom(pops.get(numpop));
                 pop.initialize();
+                POISONFIRSTHALF = R.nextInt(2);
                 // Evaluation :
                 for (int numstep=0; numstep < NBSTEPSPERGEN; numstep++)
                 {
+                    if (numstep == (int)(NBSTEPSPERGEN / 2))
+                        POISONFIRSTHALF = 1 - POISONFIRSTHALF;
                     for (int n=0; n < food.length; n++)
                         food[n].update();
                     pop.update(); // Takes care of sensors, network update, score update, motion, etc.
@@ -140,6 +149,7 @@ public class World extends Frame implements ActionListener, Runnable{
             }
             numgen ++;
         }
+        //System.exit(0);
     }
 
 }  

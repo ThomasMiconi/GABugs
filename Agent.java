@@ -13,11 +13,12 @@ public class Agent extends Item{
     World myworld;
     double[][] w;
     double[] neury, neurx;
-    double dtdivtau = 1.0 / 30.0;
+    double dtdivtau ;;
     Agent(World myw, int myn)
     {
         super(myw);
         myworld = myw;
+        dtdivtau = 1.0 / myw.TAU;
         num = myn;
         R = myworld.R;
         score=0;
@@ -46,6 +47,7 @@ public class Agent extends Item{
     }
     public void resetScore() { score = 0; } 
     public void increaseScore() { score ++; } 
+    public void decreaseScore() { score --; } 
     public void copyFrom(Agent A){
         score = A.score;
         for (int ii=0; ii < NBNEUR; ii++)
@@ -74,10 +76,13 @@ public class Agent extends Item{
         for (int ii=0; ii < NBNEUR; ii++)
             for (int jj=0; jj < NBNEUR; jj++)
             {
-                //double cauchy = myworld.MUTATIONSCALEFACTOR * Math.tan((R.nextDouble() - .5) * Math.PI);
-                //w[ii][jj] += cauchy;
-                if (R.nextDouble() < myworld.PROBAMUT)
+                if (R.nextDouble() < myworld.PROBAMUT){
                     w[ii][jj] += R.nextGaussian();
+                    w[ii][jj] *= .99;
+                    //w[ii][jj] = R.nextGaussian();
+                    //double cauchy = Math.tan((R.nextDouble() - .5) * Math.PI);
+                    //w[ii][jj] = cauchy;
+                }
                 if (w[ii][jj] > myworld.MAXW)
                     w[ii][jj] = myworld.MAXW;
                 if (w[ii][jj] < -myworld.MAXW)
@@ -89,26 +94,41 @@ public class Agent extends Item{
     public void update()
     {
         double dist, angle;
-        neury[4] = 2.0 * R.nextDouble() - 1.0;
-        neury[5] = 1.0;
-        neury[2] = 0.0; neury[3] = 0.0;
-        // Check where the food bits are, whether we have eaten one, and fill
+        int sensorR, sensorL;
+        neury[6] = 2.0 * R.nextDouble() - 1.0;
+        neury[7] = 1.0;
+        neury[8] = 0.0; //2.0 * (myworld.POISONFIRSTHALF - .5);
+        neury[2] = 0.0; neury[3] = 0.0; neury[4] = 0.0; neury[5] = 0.0;
+        // Check where the food bits (and poison bits!) are, whether we have eaten one, and fill
         // the sensors with appropriate values:
         for (int n=0; n < myworld.FOODSIZE; n++)
         {
+            // The sensors only detect 1st half vs. 2nd half, independently of which is poison. The agent must figure that out!
+            // It can only do this by using a sensor for score / pain vs. pleasure
+            // A sensor for score only could work *in theory*, but that sounds like a tall order...
+            // A "pain" vs "pleasure" sensor could be more helpful.
+            //if ( (n < myworld.FOODSIZE /2  && myworld.POISONFIRSTHALF == 1) || (n >= myworld.FOODSIZE /2  && myworld.POISONFIRSTHALF == 0))  { sensorL = 2; sensorR = 3; } else{ sensorL = 4; sensorR = 5;}
+            if ( n < myworld.FOODSIZE /2)  { sensorL = 2; sensorR = 3; } else{ sensorL = 4; sensorR = 5;}
             dist = getDistanceFrom(myworld.food[n]); // getDistanceFrom and getAngleFrom are from ancestor class Item
             if (dist < myworld.EATRADIUS)  // Eaten!
             {
-                    increaseScore();
-                    myworld.food[n].randPos(); 
+                if ( (n < myworld.FOODSIZE /2  && myworld.POISONFIRSTHALF == 1) || (n >= myworld.FOODSIZE /2  && myworld.POISONFIRSTHALF == 0)) {
+                    increaseScore(); 
+                    neury[8] = 3.0;
+                }
+                else {
+                    decreaseScore();
+                    neury[8] = -3.0;
+                }
+                myworld.food[n].randPos(); 
             }
             else
             {
                 angle = getAngleFrom(myworld.food[n]);
                 if ((angle-heading < 3.0) && (angle-heading > 0))
-                    neury[2] += 1.0 / (1.0 + .1 * dist);
+                    neury[sensorL] += 1.0 / (1.0 + .1 * dist);
                 if ((angle-heading > -3.0) && (angle-heading < 0))
-                    neury[3] += 1.0 / (1.0 + .1 * dist);
+                    neury[sensorR] += 1.0 / (1.0 + .1 * dist);
             }
 
         }
