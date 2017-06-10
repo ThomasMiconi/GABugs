@@ -2,7 +2,9 @@
 // NOTE: Much of the spatial logic is inherited from class Item!
 
 import java.util.Random;
-public class Agent extends Item{
+import java.io.Serializable;
+
+public class Agent extends Item implements Serializable{
     int score;
     int num;
     Random R;
@@ -10,20 +12,21 @@ public class Agent extends Item{
     double speed;
     double heading;
     int NBNEUR, WSIZE;
-    World myworld;
+    double MUTATIONSIZE, MAXW;
     double[][] w;
     double[] neury, neurx;
     double dtdivtau ;;
-    Agent(World myw, int myn)
+    Agent() {} // Just a placeholder for deserialization.
+    Agent(World myworld, int myn)
     {
-        super(myw);
-        myworld = myw;
+        super(myworld);
         dtdivtau = 1.0 / myw.TAU;
         num = myn;
         R = myworld.R;
         score=0;
         NBNEUR = myworld.NBNEUR; 
         WSIZE = myworld.WSIZE;
+        MUTATIONSIZE = myworld.MUTATIONSIZE; MAXW = myworld.MAXW;
         neurx = new double[NBNEUR];
         neury = new double[NBNEUR];
         for (int ii=0; ii < NBNEUR; ii++){ 
@@ -76,22 +79,24 @@ public class Agent extends Item{
         for (int ii=0; ii < NBNEUR; ii++)
             for (int jj=0; jj < NBNEUR; jj++)
             {
-                if (R.nextDouble() < myworld.PROBAMUT){
-                    w[ii][jj] += R.nextGaussian();
+                w[ii][jj] += MUTATIONSIZE * R.nextGaussian();
+                w[ii][jj] *= .995;
+                /*if (R.nextDouble() < myworld.PROBAMUT){
+                    w[ii][jj] += myworld.MUTATIONSIZE * R.nextGaussian();
                     w[ii][jj] *= .99;
                     //w[ii][jj] = R.nextGaussian();
                     //double cauchy = Math.tan((R.nextDouble() - .5) * Math.PI);
                     //w[ii][jj] = cauchy;
-                }
-                if (w[ii][jj] > myworld.MAXW)
-                    w[ii][jj] = myworld.MAXW;
-                if (w[ii][jj] < -myworld.MAXW)
-                    w[ii][jj] = -myworld.MAXW;
+                }*/
+                if (w[ii][jj] > MAXW)
+                    w[ii][jj] = MAXW;
+                if (w[ii][jj] < -MAXW)
+                    w[ii][jj] = -MAXW;
             }
     }
 
     // This function controls the agent's behavior.
-    public void update()
+    public void update(World myworld)
     {
         double dist, angle;
         int sensorR, sensorL;

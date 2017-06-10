@@ -1,4 +1,6 @@
 import java.awt.*;  
+import java.io.PrintWriter;
+import java.io.IOException;
 import java.awt.event.*;  
 import java.util.Random;
 import java.util.ArrayList;
@@ -34,30 +36,51 @@ public class World extends Frame implements ActionListener, Runnable{
     TextField tf1;
     Label scorelabel;
     Button b1,b2, b3; 
+    Checkbox cbOnly0;
+    String FILESUFFIX;
     Random R;
+    PrintWriter outputfilewriter;
     MyCanvas cnv;
     int delay=0, FOODSIZE = 10, 
         POPSIZE = 4, 
-        WSIZE = 350,  NBSTEPSPERGEN = 20000,
-           NBPOPS = 200,
-           NBBEST = 40, 
+        WSIZE = 250,  NBSTEPSPERGEN = 10000,
+           NBPOPS = 100,
+           NBBEST = 20, 
            SEED = 0,
            POISONFIRSTHALF = 1, // Half of the foodbits are poison; is it 1st or 2nd half?
-        NBNEUR = 30; // 20;
+        NBNEUR = 20; // 20;
     double FOODSPEED = 1.0, 
            AGENTSPEED = 5.0, 
            AGENTANGULARSPEED = .3, 
            EATRADIUS = 10.0,
            PROBAMUT = .05,
+           MUTATIONSIZE= 1.0,
            TAU = 5.0,
            MAXW = 10.0;
+    //boolean ONLYSHOW0 = false;
     FoodBit[] food;
     Population pop, bestpop;
     ArrayList<Population>  pops;
     int bestscore;
     int numgen;
     protected Thread thrd;
-    World(){ 
+    World(String args[]){ 
+        int numarg = 0;
+        if (args.length % 2 != 0) { throw new RuntimeException("Each argument must be provided with its value"); }
+        while (numarg < args.length) {
+            if (args[numarg].equals( "POPSIZE")) POPSIZE = Integer.parseInt(args[numarg+1]);
+            if (args[numarg].equals( "NBBEST")) NBBEST = Integer.parseInt(args[numarg+1]);
+            if (args[numarg].equals( "NBSTEPSPERGEN")) NBSTEPSPERGEN = Integer.parseInt(args[numarg+1]);
+            if (args[numarg].equals( "NBPOPS")) NBPOPS = Integer.parseInt(args[numarg+1]);
+            if (args[numarg].equals( "SEED")) SEED = Integer.parseInt(args[numarg+1]);
+            if (args[numarg].equals( "NBNEUR")) NBNEUR = Integer.parseInt(args[numarg+1]);
+            if (args[numarg].equals( "TAU")) TAU  = Double.parseDouble(args[numarg+1]);
+            if (args[numarg].equals( "PROBAMUT")) PROBAMUT  = Double.parseDouble(args[numarg+1]);
+            if (args[numarg].equals( "MUTATIONSIZE")) MUTATIONSIZE  = Double.parseDouble(args[numarg+1]);
+            numarg += 2;
+        }
+        FILESUFFIX = "_globalmut_MUTATIONSIZE"+MUTATIONSIZE+"_NBNEUR"+NBNEUR+"_SEED"+SEED;
+        try { outputfilewriter = new PrintWriter("results"+FILESUFFIX+".txt"); } catch(IOException e) {}
         // Initializations and graphics setup...
         R = new Random(SEED);
         pop = new Population(this);
@@ -69,22 +92,25 @@ public class World extends Frame implements ActionListener, Runnable{
         food = new FoodBit[FOODSIZE]; for (int nn=0; nn< food.length; nn++) food[nn] = new FoodBit(this);
         tf1=new TextField();  
         tf1.setText(Integer.toString(delay));
-        b1=new Button("+"); b2=new Button("-"); b3=new Button("O");
+        b1=new Button("+"); b2=new Button("-"); b3=new Button("Switch Poison"); cbOnly0 = new Checkbox("Suspend evaluation,\n only show best pop.");
         scorelabel.setText("Score: 0");
         b1.addActionListener(this); b2.addActionListener(this); b3.addActionListener(this); 
-        add(tf1);add(b1);add(b2); add(scorelabel); // add(b3);
+        //cbOnly0.addItemListener(new ItemListener() { public void itemStateChanged(ItemEvent e) {
+        //        if (ONLYSHOW0) ONLYSHOW0 = false; else ONLYSHOW0 = true;
+        //    }
+        //});
+        /*add(tf1);add(b1);add(b2); add(scorelabel); add(b3); // add(cbOnly0);  
         cnv = new MyCanvas(this);
         add(cnv);
         addWindowListener ( new WindowAdapter() {
             public void windowClosing ( WindowEvent evt ) {
+                outputfilewriter.close();
                 System.exit ( 0 );
             }
         } );
         setLayout(new FlowLayout());  
         pack();
-        setVisible(true);  
-        thrd = new Thread(this);
-        thrd.start();
+        setVisible(true);  */
     }         
 
     public void actionPerformed(ActionEvent e) {
@@ -94,18 +120,24 @@ public class World extends Frame implements ActionListener, Runnable{
         }else if(e.getSource()==b2){  
             if (delay >= 50)
                 delay-=50;  
-        }
+        }else if(e.getSource()==b3){  
+            POISONFIRSTHALF = 1 - POISONFIRSTHALF;
+        }            
         tf1.setText(Integer.toString(delay));
     }  
+
     public static void main(String[] args) {  
-        World tf = new World();  
+        World tf = new World(args);  
+        Thread thrd = new Thread(tf);
+        thrd.start();
+        
     }  
 
     
     // The actual evolutionary algorithm!
     public void run()
     {
-        numgen = 0;
+        numgen = 0; boolean currentlyOnlyShowing0=false;
         for (int i=0; i<NBPOPS; i++) pops.get(i).randomizeNets();
         while (true)
         {
@@ -122,7 +154,7 @@ public class World extends Frame implements ActionListener, Runnable{
                         POISONFIRSTHALF = 1 - POISONFIRSTHALF;
                     for (int n=0; n < food.length; n++)
                         food[n].update();
-                    pop.update(); // Takes care of sensors, network update, score update, motion, etc.
+                    pop.update(this); // Takes care of sensors, network update, score update, motion, etc.
 
                     // We need a delay between refreshes if we want to see what's going on...
                     // But we can set it to 0 (with the buttons) if we just want
@@ -142,6 +174,8 @@ public class World extends Frame implements ActionListener, Runnable{
             bestscore = pops.get(0).getTotalScore();
             //System.out.println("Gen "+numgen+": "+bestscore+" "+pops.get(1).getTotalScore());
             System.out.println(bestscore);
+            outputfilewriter.println(bestscore); outputfilewriter.flush();
+            pops.get(0).savePop("bestpop"+FILESUFFIX+".txt");
             for (int n=NBBEST; n<NBPOPS; n++)
             {
                 pops.get(n).copyFrom(pops.get(R.nextInt(NBBEST)));
@@ -149,7 +183,6 @@ public class World extends Frame implements ActionListener, Runnable{
             }
             numgen ++;
         }
-        //System.exit(0);
     }
 
 }  
