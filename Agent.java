@@ -8,6 +8,7 @@ public class Agent extends Item implements Serializable{
     int score;
     int num;
     Random R;
+    World myworld;
     double rotation;
     double speed;
     double heading;
@@ -16,10 +17,10 @@ public class Agent extends Item implements Serializable{
     double[][] w;
     double[] neury, neurx;
     double dtdivtau ;;
-    Agent() {} // Just a placeholder for deserialization.
-    Agent(World myworld, int myn)
+    Agent(World ww, int myn)
     {
-        super(myworld);
+        super(ww);
+        myworld = ww;
         dtdivtau = 1.0 / myw.TAU;
         num = myn;
         R = myworld.R;
@@ -66,28 +67,31 @@ public class Agent extends Item implements Serializable{
     public void runNetwork()
     {
         double tempx;
+            int startcol;
         for (int row=0; row < NBNEUR; row++){
             tempx = 0;
             for (int col=0; col < NBNEUR; col++)
-                tempx += w[row][col] * neury[col];
+                if ((row > 2) || (col < 2 || col > 9)) // The actuators can't receive direct sensor input!
+                    tempx += w[row][col] * neury[col];
             neurx[row] += dtdivtau * (tempx - neurx[row]);
-            neury[row] = Math.tanh(neurx[row]);
         }
+        for (int row=0; row < NBNEUR; row++)
+            neury[row] = Math.tanh(neurx[row]);
     }
     public void mutate()
     {
         for (int ii=0; ii < NBNEUR; ii++)
             for (int jj=0; jj < NBNEUR; jj++)
             {
-                w[ii][jj] += MUTATIONSIZE * R.nextGaussian();
-                w[ii][jj] *= .995;
-                /*if (R.nextDouble() < myworld.PROBAMUT){
+                /*w[ii][jj] += MUTATIONSIZE * R.nextGaussian();
+                w[ii][jj] *= .995;*/
+                if (R.nextDouble() < myworld.PROBAMUT){
                     w[ii][jj] += myworld.MUTATIONSIZE * R.nextGaussian();
                     w[ii][jj] *= .99;
                     //w[ii][jj] = R.nextGaussian();
                     //double cauchy = Math.tan((R.nextDouble() - .5) * Math.PI);
                     //w[ii][jj] = cauchy;
-                }*/
+                }
                 if (w[ii][jj] > MAXW)
                     w[ii][jj] = MAXW;
                 if (w[ii][jj] < -MAXW)
@@ -96,13 +100,13 @@ public class Agent extends Item implements Serializable{
     }
 
     // This function controls the agent's behavior.
-    public void update(World myworld)
+    public void update()
     {
         double dist, angle;
         int sensorR, sensorL;
         neury[6] = 2.0 * R.nextDouble() - 1.0;
         neury[7] = 1.0;
-        neury[8] = 0.0; //2.0 * (myworld.POISONFIRSTHALF - .5);
+        neury[8] = 0.0; neury[9] = 0; //2.0 * (myworld.POISONFIRSTHALF - .5);
         neury[2] = 0.0; neury[3] = 0.0; neury[4] = 0.0; neury[5] = 0.0;
         // Check where the food bits (and poison bits!) are, whether we have eaten one, and fill
         // the sensors with appropriate values:
@@ -123,7 +127,7 @@ public class Agent extends Item implements Serializable{
                 }
                 else {
                     decreaseScore();
-                    neury[8] = -3.0;
+                    neury[9] = -3.0;
                 }
                 myworld.food[n].randPos(); 
             }

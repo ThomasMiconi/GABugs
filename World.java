@@ -6,49 +6,26 @@ import java.util.Random;
 import java.util.ArrayList;
 import java.util.Collections;
 
-// The canvas on which we will draw the world
-class MyCanvas extends Canvas{
-    World myWorld;
-    public MyCanvas(World tt) {  
-        myWorld = tt;
-        setBackground (Color.gray);  
-        setSize(tt.WSIZE, tt.WSIZE);  
-    }  
-    public void paint(Graphics G){
-        // The green oval is there for no reason at all.
-        G.setColor(Color.green); G.fillOval(10, 50, 20, 10);
-        for (int n=0; n < myWorld.food.length; n++){
-
-            if ( (n < myWorld.FOODSIZE /2  && myWorld.POISONFIRSTHALF == 1) || (n >= myWorld.FOODSIZE /2  && myWorld.POISONFIRSTHALF == 0) ) 
-                G.setColor(Color.white);
-            else
-                G.setColor(Color.black);
-            G.fillOval((int)(myWorld.food[n].x), (int)myWorld.food[n].y, 4, 4);
-        }
-        myWorld.pop.draw(G); // Population of agents can draw itself.
-    }
-}
-
 // The World class is the overall controller and also implements the View (w/ MyCanvas).
 // While it defines the overall algorithm, much of the actual logic occurs in
 // classes Agent, Item, Population and FoodItem.
-public class World extends Frame implements ActionListener, Runnable{
+public class World extends Frame {
     TextField tf1;
-    Label scorelabel;
     Button b1,b2, b3; 
     Checkbox cbOnly0;
     String FILESUFFIX;
+    String FILENAME = "";
     Random R;
     PrintWriter outputfilewriter;
-    MyCanvas cnv;
+    MyFrame mf;
     int delay=0, FOODSIZE = 10, 
-        POPSIZE = 4, 
+        POPSIZE = 3, 
         WSIZE = 250,  NBSTEPSPERGEN = 10000,
-           NBPOPS = 100,
-           NBBEST = 20, 
+           NBPOPS = 200,
+           NBBEST = 40, 
            SEED = 0,
            POISONFIRSTHALF = 1, // Half of the foodbits are poison; is it 1st or 2nd half?
-        NBNEUR = 20; // 20;
+        NBNEUR = 25; // 20;
     double FOODSPEED = 1.0, 
            AGENTSPEED = 5.0, 
            AGENTANGULARSPEED = .3, 
@@ -59,6 +36,7 @@ public class World extends Frame implements ActionListener, Runnable{
            MAXW = 10.0;
     //boolean ONLYSHOW0 = false;
     FoodBit[] food;
+    boolean VISUALONLY = false;
     Population pop, bestpop;
     ArrayList<Population>  pops;
     int bestscore;
@@ -68,6 +46,7 @@ public class World extends Frame implements ActionListener, Runnable{
         int numarg = 0;
         if (args.length % 2 != 0) { throw new RuntimeException("Each argument must be provided with its value"); }
         while (numarg < args.length) {
+            if (args[numarg].equals( "FILENAME")) { VISUALONLY = true; FILENAME  = args[numarg+1]; }
             if (args[numarg].equals( "POPSIZE")) POPSIZE = Integer.parseInt(args[numarg+1]);
             if (args[numarg].equals( "NBBEST")) NBBEST = Integer.parseInt(args[numarg+1]);
             if (args[numarg].equals( "NBSTEPSPERGEN")) NBSTEPSPERGEN = Integer.parseInt(args[numarg+1]);
@@ -79,8 +58,10 @@ public class World extends Frame implements ActionListener, Runnable{
             if (args[numarg].equals( "MUTATIONSIZE")) MUTATIONSIZE  = Double.parseDouble(args[numarg+1]);
             numarg += 2;
         }
-        FILESUFFIX = "_globalmut_MUTATIONSIZE"+MUTATIONSIZE+"_NBNEUR"+NBNEUR+"_SEED"+SEED;
-        try { outputfilewriter = new PrintWriter("results"+FILESUFFIX+".txt"); } catch(IOException e) {}
+        FILESUFFIX = "_sepsens_nodirectio_noglobalmut_MUTATIONSIZE"+MUTATIONSIZE+"_NBNEUR"+NBNEUR+"_SEED"+SEED;
+        if (VISUALONLY == false) {
+            try { outputfilewriter = new PrintWriter("results"+FILESUFFIX+".txt"); } catch(IOException e) {}
+        }
         // Initializations and graphics setup...
         R = new Random(SEED);
         pop = new Population(this);
@@ -88,17 +69,8 @@ public class World extends Frame implements ActionListener, Runnable{
         for (int i=0; i<NBPOPS; i++) 
             pops.add(new Population(this));
         bestpop = new Population(this);
-        scorelabel = new Label(); scorelabel.setPreferredSize(new Dimension(100, 25));
         food = new FoodBit[FOODSIZE]; for (int nn=0; nn< food.length; nn++) food[nn] = new FoodBit(this);
-        tf1=new TextField();  
-        tf1.setText(Integer.toString(delay));
-        b1=new Button("+"); b2=new Button("-"); b3=new Button("Switch Poison"); cbOnly0 = new Checkbox("Suspend evaluation,\n only show best pop.");
-        scorelabel.setText("Score: 0");
-        b1.addActionListener(this); b2.addActionListener(this); b3.addActionListener(this); 
-        //cbOnly0.addItemListener(new ItemListener() { public void itemStateChanged(ItemEvent e) {
-        //        if (ONLYSHOW0) ONLYSHOW0 = false; else ONLYSHOW0 = true;
-        //    }
-        //});
+        mf = new MyFrame(this);
         /*add(tf1);add(b1);add(b2); add(scorelabel); add(b3); // add(cbOnly0);  
         cnv = new MyCanvas(this);
         add(cnv);
@@ -113,23 +85,9 @@ public class World extends Frame implements ActionListener, Runnable{
         setVisible(true);  */
     }         
 
-    public void actionPerformed(ActionEvent e) {
-        // The buttons control the waiting delay between refreshes.
-        if(e.getSource()==b1){  
-            delay+=50;  
-        }else if(e.getSource()==b2){  
-            if (delay >= 50)
-                delay-=50;  
-        }else if(e.getSource()==b3){  
-            POISONFIRSTHALF = 1 - POISONFIRSTHALF;
-        }            
-        tf1.setText(Integer.toString(delay));
-    }  
-
     public static void main(String[] args) {  
         World tf = new World(args);  
-        Thread thrd = new Thread(tf);
-        thrd.start();
+        tf.run();
         
     }  
 
@@ -145,8 +103,10 @@ public class World extends Frame implements ActionListener, Runnable{
             for (int numpop=0; numpop < NBPOPS; numpop++)
             {
                 pop.copyFrom(pops.get(numpop));
+                if (VISUALONLY) pop.readPop(FILENAME);
                 pop.initialize();
                 POISONFIRSTHALF = R.nextInt(2);
+                System.out.println(pop.pop[0].w[0][0]);
                 // Evaluation :
                 for (int numstep=0; numstep < NBSTEPSPERGEN; numstep++)
                 {
@@ -154,7 +114,7 @@ public class World extends Frame implements ActionListener, Runnable{
                         POISONFIRSTHALF = 1 - POISONFIRSTHALF;
                     for (int n=0; n < food.length; n++)
                         food[n].update();
-                    pop.update(this); // Takes care of sensors, network update, score update, motion, etc.
+                    pop.update(); // Takes care of sensors, network update, score update, motion, etc.
 
                     // We need a delay between refreshes if we want to see what's going on...
                     // But we can set it to 0 (with the buttons) if we just want
@@ -164,8 +124,8 @@ public class World extends Frame implements ActionListener, Runnable{
                     {
                         System.out.println ( "Exception: " + e.getMessage() );
                     }        
-                    cnv.repaint();
-                    scorelabel.setText("Score: "+pop.getTotalScore());
+                    mf.cnv.repaint();
+                    mf.scorelabel.setText("Score: "+pop.getTotalScore());
                 }
                 pops.get(numpop).copyFrom(pop); // Mostly to get back the total score.
             }
@@ -174,8 +134,10 @@ public class World extends Frame implements ActionListener, Runnable{
             bestscore = pops.get(0).getTotalScore();
             //System.out.println("Gen "+numgen+": "+bestscore+" "+pops.get(1).getTotalScore());
             System.out.println(bestscore);
-            outputfilewriter.println(bestscore); outputfilewriter.flush();
-            pops.get(0).savePop("bestpop"+FILESUFFIX+".txt");
+            if (VISUALONLY == false){
+                outputfilewriter.println(bestscore); outputfilewriter.flush();
+                pops.get(0).savePop("bestpop"+FILESUFFIX+".txt");
+            }
             for (int n=NBBEST; n<NBPOPS; n++)
             {
                 pops.get(n).copyFrom(pops.get(R.nextInt(NBBEST)));

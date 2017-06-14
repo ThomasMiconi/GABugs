@@ -5,7 +5,7 @@ import java.awt.event.*;
 import java.util.Random;
 
 // The canvas on which we will draw the world
-class MyNewCanvas extends Canvas{
+class MyNewCanvas extends Canvas {
     World myWorld;
     public MyNewCanvas(World tt) {  
         myWorld = tt;
@@ -27,93 +27,52 @@ class MyNewCanvas extends Canvas{
     }
 }
 
-public class Visual extends Frame implements ActionListener, Runnable {
+public class MyFrame extends Frame implements ActionListener {
     World myWorld;
     TextField tf1;
     Label scorelabel;
     Button b1,b2, b3; 
     Random R;
-    PrintWriter outputfilewriter;
     MyNewCanvas cnv;
-    protected Thread thrd;
-    Population pop;
-    FoodBit[] food;
-    int POISONFIRSTHALF = 0;
-    int delay=50;
-    String FILENAME;
 
-    Visual(World ww)
+    MyFrame(World ww)
     {
-        FILENAME = fname;
         myWorld = ww;
         int numarg = 0;
-        food = new FoodBit[myWorld.FOODSIZE]; for (int nn=0; nn< food.length; nn++) food[nn] = new FoodBit(ww);
-        pop = new Population(ww);
         tf1=new TextField();  
-        tf1.setText(Integer.toString(delay));
+        tf1.setText(Integer.toString(myWorld.delay));
         b1=new Button("+"); b2=new Button("-"); b3=new Button("Switch Poison"); 
-        scorelabel.setText("Score: 0");
+        scorelabel = new Label(); scorelabel.setText("Score: 0");
+        scorelabel.setPreferredSize(new Dimension(100, 25));
         b1.addActionListener(this); b2.addActionListener(this); b3.addActionListener(this); 
         add(tf1);add(b1);add(b2); add(scorelabel); add(b3); 
         cnv = new MyNewCanvas(this.myWorld);
         add(cnv);
         addWindowListener ( new WindowAdapter() {
             public void windowClosing ( WindowEvent evt ) {
-                outputfilewriter.close();
+                if (myWorld.outputfilewriter != null)
+                    myWorld.outputfilewriter.close();
                 System.exit ( 0 );
             }
         } );
         setLayout(new FlowLayout());  
         pack();
         setVisible(true);  
+        /*
         thrd = new Thread(this);
         thrd.start();
+        */
     }         
     public void actionPerformed(ActionEvent e) {
         // The buttons control the waiting delay between refreshes.
         if(e.getSource()==b1){  
-            delay+=50;  
+            myWorld.delay+=50;  
         }else if(e.getSource()==b2){  
-            if (delay >= 50)
-                delay-=50;  
+            if (myWorld.delay >= 50)
+                myWorld.delay-=50;  
         }else if(e.getSource()==b3){  
-            POISONFIRSTHALF = 1 - POISONFIRSTHALF;
+            myWorld.POISONFIRSTHALF = 1 - myWorld.POISONFIRSTHALF;
         }            
-        tf1.setText(Integer.toString(delay));
-    }  
-
-    
-    public void run()
-    {
-        pop.readPop(FILENAME);
-        while (true)
-        {
-            pop.initialize();
-            POISONFIRSTHALF = R.nextInt(2);
-            // Evaluation :
-            for (int numstep=0; numstep < NBSTEPSPERGEN; numstep++)
-            {
-                if (numstep == (int)(NBSTEPSPERGEN / 2))
-                    POISONFIRSTHALF = 1 - POISONFIRSTHALF;
-                for (int n=0; n < food.length; n++)
-                    food[n].update();
-                // We need a delay between refreshes if we want to see what's going on...
-                // But we can set it to 0 (with the buttons) if we just want
-                // the algorithm to proceed fast.
-                try{ Thread.sleep(delay); }
-                catch ( InterruptedException e )
-                {
-                    System.out.println ( "Exception: " + e.getMessage() );
-                }        
-                cnv.repaint();
-                scorelabel.setText("Score: "+pop.getTotalScore());
-            }
-        }
-        bestscore = pop.getTotalScore();
-        //System.out.println("Gen "+numgen+": "+bestscore+" "+pops.get(1).getTotalScore());
-        System.out.println(bestscore);
+        tf1.setText(Integer.toString(myWorld.delay));
     }
-
-}  
-
-
+}

@@ -6,7 +6,6 @@ public class Item
     double y;
     Random R;
     World myw;
-    public Item() {} // Just a placeholder for serialization.
     public Item(World w)
     {
         myw = w;

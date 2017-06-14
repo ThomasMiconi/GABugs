@@ -10,14 +10,16 @@ import java.io.IOException;
 public class Population implements Comparable<Population>{
     Agent[] pop;
     int POPSIZE, NBNEUR;
+    World myworld;
     Population(World ww){
+        myworld = ww;
         NBNEUR = ww.NBNEUR;
         POPSIZE = ww.POPSIZE;
         pop = new Agent[POPSIZE]; for (int nn=0; nn< pop.length; nn++) pop[nn] = new Agent(ww, nn);
     }
-    public void update(World ww){
+    public void update(){
             for (int n=0; n < pop.length; n++)
-                pop[n].update(ww);
+                pop[n].update();
     }
     public int compareTo(Population o)
     {
@@ -73,21 +75,26 @@ public class Population implements Comparable<Population>{
             pop[n].copyFrom(pop[0]);
     }
     
-    public void readPopOld(String fname)
+    public void readPop(String fname)
     {   
         try{
-             BufferedReader in
-                    = new BufferedReader(new FileReader(fname));
-             
+            System.out.println("Reading from file "+fname);
+            BufferedReader in
+                = new BufferedReader(new FileReader(fname));
+
+            for (int numagent=0; numagent < POPSIZE; numagent++)
+            {
                 for (int row=0; row < NBNEUR; row++)
                 {   
                     String strs[] = in.readLine().split(" ");
                     if (strs.length != NBNEUR)
-                        throw new RuntimeException("Data file has wrong number of neurons!");
+                        throw new RuntimeException("Data file has wrong number of neurons! (strs.length is "+strs.length+", strs[0] is "+strs[0]+", numagent "+numagent+", row "+row+")");
                     for (int col=0; col < NBNEUR; col++)
-                        pop[0].w[row][col] = Double.parseDouble(strs[col]);
+                        pop[numagent].w[row][col] = Double.parseDouble(strs[col]);
                 }
-                in.close();
+                in.readLine(); in.readLine(); in.readLine();
+            }
+            in.close();
         }
         catch (IOException e) {
             e.printStackTrace();
@@ -95,38 +102,11 @@ public class Population implements Comparable<Population>{
         for (int numagent=1; numagent < POPSIZE; numagent++){
             pop[numagent].copyFrom(pop[0]);
         }
-
-
     }
-    public void readPop(String fname)
-    {   
 
-        try{
-            Population other;
 
-            ObjectInputStream in = new ObjectInputStream(new FileInputStream(fname));
-            other=(Population)in.readObject();
-            copyFrom(other);
-
-        }
-        catch (Exception e) { e.printStackTrace(); }
-    }
     
     public void savePop(String fname)
-    {   
-        try{
-
-            ObjectOutputStream oos = new ObjectOutputStream( 
-                    new FileOutputStream(fname));
-
-            oos.writeObject( this );
-            oos.close();
-        }
-        catch (IOException e) { e.printStackTrace(); }
-
-    }
-    
-    public void savePopOld(String fname)
     {   
         try{
             PrintWriter writer = new PrintWriter(fname);
