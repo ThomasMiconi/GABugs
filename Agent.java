@@ -42,6 +42,7 @@ public class Agent extends Item implements Serializable{
         for (int ii=0; ii < NBNEUR; ii++)
             for (int jj=0; jj < NBNEUR; jj++)
                 w[ii][jj] = (2.0 * R.nextDouble() - 1.0) ;
+                //w[ii][jj] = (2.0 * R.nextDouble() - 1.0) / Math.sqrt((double)NBNEUR);
     }
     public void resetNeurons() { 
         for (int n=0; n<NBNEUR; n++){
@@ -83,14 +84,14 @@ public class Agent extends Item implements Serializable{
         for (int ii=0; ii < NBNEUR; ii++)
             for (int jj=0; jj < NBNEUR; jj++)
             {
-                /*w[ii][jj] += MUTATIONSIZE * R.nextGaussian();
-                w[ii][jj] *= .995;*/
+                //double cauchy = Math.tan((R.nextDouble() - .5) * Math.PI);
+                //w[ii][jj] += MUTATIONSIZE * cauchy;
+                //w[ii][jj] *= .99;
+                ///w[ii][jj] += MUTATIONSIZE * R.nextGaussian();
+                //w[ii][jj] *= .99;
                 if (R.nextDouble() < myworld.PROBAMUT){
                     w[ii][jj] += myworld.MUTATIONSIZE * R.nextGaussian();
                     w[ii][jj] *= .99;
-                    //w[ii][jj] = R.nextGaussian();
-                    //double cauchy = Math.tan((R.nextDouble() - .5) * Math.PI);
-                    //w[ii][jj] = cauchy;
                 }
                 if (w[ii][jj] > MAXW)
                     w[ii][jj] = MAXW;
@@ -106,7 +107,7 @@ public class Agent extends Item implements Serializable{
         int sensorR, sensorL;
         neury[6] = 2.0 * R.nextDouble() - 1.0;
         neury[7] = 1.0;
-        neury[8] = 0.0; neury[9] = 0; //2.0 * (myworld.POISONFIRSTHALF - .5);
+        neury[8] = 0.0; neury[9] = 0.0; // 2.0 * (myworld.POISONFIRSTHALF - .5);
         neury[2] = 0.0; neury[3] = 0.0; neury[4] = 0.0; neury[5] = 0.0;
         // Check where the food bits (and poison bits!) are, whether we have eaten one, and fill
         // the sensors with appropriate values:
@@ -123,11 +124,11 @@ public class Agent extends Item implements Serializable{
             {
                 if ( (n < myworld.FOODSIZE /2  && myworld.POISONFIRSTHALF == 1) || (n >= myworld.FOODSIZE /2  && myworld.POISONFIRSTHALF == 0)) {
                     increaseScore(); 
-                    neury[8] = 3.0;
+                    neury[8] = 10.0;
                 }
                 else {
                     decreaseScore();
-                    neury[9] = -3.0;
+                    neury[9] = -10.0;
                 }
                 myworld.food[n].randPos(); 
             }
