@@ -22,7 +22,6 @@ public class World extends Frame {
         POPSIZE = 1, 
         WSIZE = 250,  NBSTEPSPERGEN = 10000,
            NBPOPS = 100,
-           VISUAL = 1,
            NBBEST = 20, 
            SEED = 4,
            POISONFIRSTHALF = 1, // Half of the foodbits are poison; is it 1st or 2nd half?
@@ -37,7 +36,7 @@ public class World extends Frame {
            MAXW = 10.0;
     //boolean ONLYSHOW0 = false;
     FoodBit[] food;
-    boolean VISUALONLY = false;
+    int VISUAL = 0;
     Population pop, bestpop;
     ArrayList<Population>  pops;
     int bestscore;
@@ -47,10 +46,10 @@ public class World extends Frame {
         int numarg = 0;
         if (args.length % 2 != 0) { throw new RuntimeException("Each argument must be provided with its value"); }
         while (numarg < args.length) {
-            if (args[numarg].equals( "FILENAME")) { VISUALONLY = true; FILENAME  = args[numarg+1]; }
+            if (args[numarg].equals( "FILENAME")) { VISUAL = 1 ; FILENAME  = args[numarg+1]; }
             if (args[numarg].equals( "POPSIZE")) POPSIZE = Integer.parseInt(args[numarg+1]);
-            if (args[numarg].equals( "VISUAL")) VISUAL = Integer.parseInt(args[numarg+1]);
             if (args[numarg].equals( "NBBEST")) NBBEST = Integer.parseInt(args[numarg+1]);
+            if (args[numarg].equals( "VISUAL")) { VISUAL  = Integer.parseInt(args[numarg+1]); if ((VISUAL !=0) && (VISUAL != 1)) throw new RuntimeException("VISUAL must be 0 or 1!");}
             if (args[numarg].equals( "NBSTEPSPERGEN")) NBSTEPSPERGEN = Integer.parseInt(args[numarg+1]);
             if (args[numarg].equals( "NBPOPS")) NBPOPS = Integer.parseInt(args[numarg+1]);
             if (args[numarg].equals( "SEED")) SEED = Integer.parseInt(args[numarg+1]);
@@ -61,12 +60,10 @@ public class World extends Frame {
             if (args[numarg].equals( "MUTATIONSIZE")) MUTATIONSIZE  = Double.parseDouble(args[numarg+1]);
             numarg += 2;
         }
-        FILESUFFIX = "_fullsens_nodirectio_noglobalmut_NBPOPS"+NBPOPS+"_MUTATIONSIZE"+MUTATIONSIZE+"_NBNEUR"+NBNEUR+"_MAXW"+MAXW+"_SEED"+SEED;
-        if (VISUALONLY == false) {
+        FILESUFFIX = "_fullsens_nodirectio_noglobalmut_cauchy_NBPOPS"+NBPOPS+"_NBBEST"+NBBEST+"_MUTATIONSIZE"+MUTATIONSIZE+"_NBNEUR"+NBNEUR+"_MAXW"+MAXW+"_SEED"+SEED;
+        if (VISUAL == 0) {
             try { outputfilewriter = new PrintWriter("results"+FILESUFFIX+".txt"); } catch(IOException e) {}
         }
-        else
-            VISUAL = 1;
         // Initializations and graphics setup...
         R = new Random(SEED);
         pop = new Population(this);
@@ -75,7 +72,7 @@ public class World extends Frame {
             pops.add(new Population(this));
         bestpop = new Population(this);
         food = new FoodBit[FOODSIZE]; for (int nn=0; nn< food.length; nn++) food[nn] = new FoodBit(this);
-        if (VISUAL != 0)
+        if (VISUAL == 1)
             mf = new MyFrame(this);
         /*add(tf1);add(b1);add(b2); add(scorelabel); add(b3); // add(cbOnly0);  
         cnv = new MyCanvas(this);
@@ -110,7 +107,8 @@ public class World extends Frame {
             for (int numpop=0; numpop < NBPOPS; numpop++)
             {
                 pop.copyFrom(pops.get(numpop));
-                if (VISUALONLY) pop.readPop(FILENAME);
+                if (FILENAME.length() > 0) 
+                    pop.readPop(FILENAME);
                 pop.initialize();
                 POISONFIRSTHALF = R.nextInt(2);
                 // Evaluation :
@@ -126,8 +124,7 @@ public class World extends Frame {
                     // But we can set it to 0 (with the buttons) if we just want
                     // the algorithm to proceed fast.
                     try{ Thread.sleep(delay); }
-                    catch ( InterruptedException e )
-                    {
+                    catch ( InterruptedException e )   {
                         System.out.println ( "Exception: " + e.getMessage() );
                     }        
                     if (VISUAL > 0){
@@ -136,16 +133,27 @@ public class World extends Frame {
                     }
                 }
                 pops.get(numpop).copyFrom(pop); // Mostly to get back the total score.
+                if (FILENAME.length() > 0) System.out.println(pop.getTotalScore());
             }
             Collections.sort(pops); // This will sort pops by ascending order of the scores, because Population implements Comparable.
             Collections.reverse(pops); // We want descending order.
             bestscore = pops.get(0).getTotalScore();
             //System.out.println("Gen "+numgen+": "+bestscore+" "+pops.get(1).getTotalScore());
             System.out.println(bestscore);
-            if (VISUALONLY == false){
+            if (FILENAME.length() == 0){
                 outputfilewriter.println(bestscore); outputfilewriter.flush();
                 pops.get(0).savePop("bestpop"+FILESUFFIX+".txt");
             }
+
+
+
+
+            // Half of the kept individuals are actually randomly chosen
+            //for (int n=NBBEST/2; n < NBBEST; n++)
+                    //pops.get(n).copyFrom(pops.get(R.nextInt(NBPOPS)));
+
+
+
             for (int n=NBBEST; n<NBPOPS; n++)
             {
                 /*int z1 = R.nextInt(NBBEST);
@@ -154,8 +162,8 @@ public class World extends Frame {
                     z1 = z2;
                 pops.get(n).copyFrom(pops.get(z1));
                 pops.get(n).mutate();*/
-                pops.get(n).copyFrom(pops.get(R.nextInt(NBBEST)));
-                pops.get(n).mutate();
+                    pops.get(n).copyFrom(pops.get(R.nextInt(NBBEST)));
+                    pops.get(n).mutate();
             }
             numgen ++;
         }

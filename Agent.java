@@ -84,14 +84,14 @@ public class Agent extends Item implements Serializable{
         for (int ii=0; ii < NBNEUR; ii++)
             for (int jj=0; jj < NBNEUR; jj++)
             {
-                //double cauchy = Math.tan((R.nextDouble() - .5) * Math.PI);
-                //w[ii][jj] += MUTATIONSIZE * cauchy;
-                //w[ii][jj] *= .99;
                 ///w[ii][jj] += MUTATIONSIZE * R.nextGaussian();
                 //w[ii][jj] *= .99;
                 if (R.nextDouble() < myworld.PROBAMUT){
-                    w[ii][jj] += myworld.MUTATIONSIZE * R.nextGaussian();
+                    double cauchy = Math.tan((R.nextDouble() - .5) * Math.PI);
+                    w[ii][jj] += MUTATIONSIZE * cauchy;
                     w[ii][jj] *= .99;
+                //    w[ii][jj] += myworld.MUTATIONSIZE * R.nextGaussian();
+                //    w[ii][jj] *= .99;
                 }
                 if (w[ii][jj] > MAXW)
                     w[ii][jj] = MAXW;

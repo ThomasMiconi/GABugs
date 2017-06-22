@@ -97,7 +97,7 @@ public class Population implements Comparable<Population>{
             in.close();
         }
         catch (IOException e) {
-            e.printStackTrace();
+            e.printStackTrace(); System.out.println("Couldn't read population from file "+fname); System.exit(0);            
         }
         for (int numagent=1; numagent < POPSIZE; numagent++){
             pop[numagent].copyFrom(pop[0]);
@@ -123,7 +123,7 @@ public class Population implements Comparable<Population>{
             writer.close();
         }
         catch (IOException e) {
-            e.printStackTrace();
+            e.printStackTrace(); System.out.println("Couldn't save population to file "+fname); System.exit(0);            
         }
 
     }
