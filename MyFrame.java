@@ -23,7 +23,7 @@ class MyNewCanvas extends Canvas {
                 G.setColor(Color.black);
             G.fillOval((int)(myWorld.food[n].x), (int)myWorld.food[n].y, 4, 4);
         }
-        myWorld.pop.draw(G); // Population of agents can draw itself.
+        myWorld.agent.draw(G); // Population of agents can draw itself.
     }
 }
 

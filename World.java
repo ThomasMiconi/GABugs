@@ -8,7 +8,7 @@ import java.util.Collections;
 
 // The World class is the overall controller.
 // While it defines the overall algorithm, much of the actual logic occurs in
-// classes Agent, Item, Population and FoodItem.
+// classes Agent, Item, Agent and FoodItem.
 public class World extends Frame {
     // First, various definitions....
     String FILESUFFIX;
@@ -18,15 +18,10 @@ public class World extends Frame {
     MyFrame mf; // MyFrame defines the graphical View/Controller.
     int delay=0, 
         FOODSIZE = 10, // Number of food items
-
-        // NOTE: What we are evolving here is not single agents, but *populations*. In the current version, each population has size 1, or if it has more than one agent, all agents are clones and share a common genome. 
-        // For this task it is unnecessary, but this allows us to evolve collective behaviors in the future
-
-        POPSIZE = 1,   // Nuber of agents used in each population (all sharing the same unique genome, in the current version). You can set this to a higher number, but for now we evolve populations of size 1.
         WSIZE = 250,  
         NBSTEPSPEREVAL = 10000,  // Duration of an evaluation
-        NBPOPS = 100,           // Number of 'populations' (each coresponding to one genome) in the algorithm
-        NBBEST = 20,            // How many of the best populations are kept from each generation to the next
+        POPSIZE = 100,           // Number of agents in the population
+        NBBEST = 20,            // How many of the best agents are kept from each generation to the next
         SEED = 0, // Random seed
         POISONFIRSTHALF = 1, // Half of the foodbits are poison; is it 1st or 2nd half?
         NBNEUR = 25; // Number of neurons
@@ -40,10 +35,9 @@ public class World extends Frame {
            MAXW = 10.0;     // Maximum weight 
     FoodBit[] food;
     int VISUAL = 0;  // Using graphics or not?
-    Population pop, bestpop;  // 'pop' is the population being currently evaluated. 
-    ArrayList<Population>  pops;  // The list of populations on which the genetic algorithm is performed
-    int bestscore;
-    int bestscoreever;
+    Agent agent, bestagent;  // 'agent' is the agent being currently evaluated. 
+    ArrayList<Agent>  population;  // The list of agents on which the genetic algorithm is performed
+    int bestscore , bestscoreever;
     int numgen;
     protected Thread thrd;
     World(String args[]){ 
@@ -52,11 +46,10 @@ public class World extends Frame {
         if (args.length % 2 != 0) { throw new RuntimeException("Each argument must be provided with its value"); }
         while (numarg < args.length) {
             if (args[numarg].equals( "FILENAME")) { VISUAL = 1 ; FILENAME  = args[numarg+1]; delay=50; }
-            if (args[numarg].equals( "POPSIZE")) POPSIZE = Integer.parseInt(args[numarg+1]);
             if (args[numarg].equals( "NBBEST")) NBBEST = Integer.parseInt(args[numarg+1]);
             if (args[numarg].equals( "VISUAL")) { VISUAL  = Integer.parseInt(args[numarg+1]); if ((VISUAL !=0) && (VISUAL != 1)) throw new RuntimeException("VISUAL must be 0 or 1!");}
             if (args[numarg].equals( "NBSTEPSPEREVAL")) NBSTEPSPEREVAL = Integer.parseInt(args[numarg+1]);
-            if (args[numarg].equals( "NBPOPS")) NBPOPS = Integer.parseInt(args[numarg+1]);
+            if (args[numarg].equals( "POPSIZE")) POPSIZE = Integer.parseInt(args[numarg+1]);
             if (args[numarg].equals( "SEED")) SEED = Integer.parseInt(args[numarg+1]);
             if (args[numarg].equals( "NBNEUR")) NBNEUR = Integer.parseInt(args[numarg+1]);
             if (args[numarg].equals( "TAU")) TAU  = Double.parseDouble(args[numarg+1]);
@@ -65,17 +58,17 @@ public class World extends Frame {
             if (args[numarg].equals( "MUTATIONSIZE")) MUTATIONSIZE  = Double.parseDouble(args[numarg+1]);
             numarg += 2;
         }
-        // suffix for the output files (results and bestpop).
-        FILESUFFIX = "_fullsens_nodirectio_noglobalmut_cauchy_NBPOPS"+NBPOPS+"_NBBEST"+NBBEST+"_MUTATIONSIZE"+MUTATIONSIZE+"_NBNEUR"+NBNEUR+"_MAXW"+MAXW+"_SEED"+SEED;
+        // suffix for the output files (results and bestagent).
+        FILESUFFIX = "_singleagent_fullsens_nodirectio_noglobalmut_cauchy_POPSIZE"+POPSIZE+"_NBBEST"+NBBEST+"_MUTATIONSIZE"+MUTATIONSIZE+"_NBNEUR"+NBNEUR+"_MAXW"+MAXW+"_SEED"+SEED;
         if (VISUAL == 0) {
             try { outputfilewriter = new PrintWriter("results"+FILESUFFIX+".txt"); } catch(IOException e) {}
         }
         // Initializations and graphics setup...
         R = new Random(SEED);
-        pop = new Population(this);
-        pops = new ArrayList<Population>();
-        for (int i=0; i<NBPOPS; i++) 
-            pops.add(new Population(this));
+        agent = new Agent(this);
+        population = new ArrayList<Agent>();
+        for (int i=0; i<POPSIZE; i++) 
+            population.add(new Agent(this));
         food = new FoodBit[FOODSIZE]; for (int nn=0; nn< food.length; nn++) food[nn] = new FoodBit(this);
         if (VISUAL == 1)
             mf = new MyFrame(this);
@@ -93,19 +86,19 @@ public class World extends Frame {
     public void run()
     {
         numgen = 0; bestscoreever = 0;
-        for (int i=0; i<NBPOPS; i++) pops.get(i).randomizeNets();
+        for (int i=0; i<POPSIZE; i++) population.get(i).randomizeNet();
         //while (numgen < 10)
         while (true)
         {
-            // Note that we re-evaluate the champion populations at each generation, even though we already know their score! OTOH, score evaluation is quite noisy, so it's probably worth it.
-            for (int numpop=0; numpop < NBPOPS; numpop++)
+            // Note that we re-evaluate the champion agents at each generation, even though we already know their score! OTOH, score evaluation is quite noisy, so it's probably worth it.
+            for (int numagent=0; numagent < POPSIZE; numagent++)
             {
-                // Each population is evaluated in turn by putting it into the 'active' pop.
-                pop.copyFrom(pops.get(numpop));
-                // If we are currently visualizing a population saved in a 'bestpop' file (provided as command line argument), we only ever show this one.
+                // Each agent is evaluated in turn by putting it into the 'active' agent.
+                agent.copyFrom(population.get(numagent));
+                // If we are currently visualizing an agent saved in a 'bestagent' file (provided as command line argument), we only ever show this one.
                 if (FILENAME.length() > 0) 
-                    pop.readPop(FILENAME);
-                pop.initialize();
+                    agent.readAgent(FILENAME);
+                agent.initialize();
                 // Which is food, which is poison? Randomly set.
                 POISONFIRSTHALF = R.nextInt(2);
 
@@ -117,7 +110,7 @@ public class World extends Frame {
                         POISONFIRSTHALF = 1 - POISONFIRSTHALF;
                     for (int n=0; n < food.length; n++)
                         food[n].update();
-                    pop.update(); // Takes care of sensors, network update, score update, motion, etc.
+                    agent.update(); // Takes care of sensors, network update, score update, motion, etc.
 
                     // If using graphics, 
                     // we need a delay between refreshes if we want to see what's going on...
@@ -129,31 +122,31 @@ public class World extends Frame {
                     }        
                     if (VISUAL > 0){
                         mf.cnv.repaint();
-                        mf.scorelabel.setText("Score: "+pop.getTotalScore());
+                        mf.scorelabel.setText("Score: "+agent.getScore());
                     }
                 }
-                pops.get(numpop).copyFrom(pop); // Mostly to get back the total score.
-                if (FILENAME.length() > 0) System.out.println(pop.getTotalScore());
+                population.get(numagent).copyFrom(agent); // Mostly to get back the total score.
+                if (FILENAME.length() > 0) System.out.println(agent.getScore());
             }
-            Collections.sort(pops); // This will sort pops by ascending order of the scores, because Population implements Comparable.
-            Collections.reverse(pops); // We want descending order.
-            bestscore = pops.get(0).getTotalScore();
-            //System.out.println("Gen "+numgen+": "+bestscore+" "+pops.get(1).getTotalScore());
+            Collections.sort(population); // This will sort population by ascending order of the scores, because Agent implements Comparable.
+            Collections.reverse(population); // We want descending order.
+            bestscore = population.get(0).getScore();
+            //System.out.println("Gen "+numgen+": "+bestscore+" "+population.get(1).getScore());
             System.out.println(bestscore);
             if (FILENAME.length() == 0){
                 outputfilewriter.println(bestscore); outputfilewriter.flush();
-                pops.get(0).savePop("bestpop"+FILESUFFIX+".txt");
-                if (pops.get(0).getTotalScore() > bestscoreever)
+                population.get(0).saveAgent("bestagent"+FILESUFFIX+".txt");
+                if (population.get(0).getScore() > bestscoreever)
                 {
-                    bestscoreever = pops.get(0).getTotalScore();
-                    pops.get(0).savePop("besteverpop"+FILESUFFIX+".txt");
+                    bestscoreever = population.get(0).getScore();
+                    population.get(0).saveAgent("besteveragent"+FILESUFFIX+".txt");
                 }
             }
 
-            for (int n=NBBEST; n<NBPOPS; n++)
+            for (int n=NBBEST; n<POPSIZE; n++)
             {
-                pops.get(n).copyFrom(pops.get(R.nextInt(NBBEST)));
-                pops.get(n).mutate();
+                population.get(n).copyFrom(population.get(R.nextInt(NBBEST)));
+                population.get(n).mutate();
             }
             numgen ++;
         }

@@ -1,12 +1,17 @@
 // This class controls the agents.
 // NOTE: Much of the spatial logic is contained in class Item, which this clas inherits from.
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.PrintWriter;
+import java.awt.*;  
 import java.util.Random;
-import java.io.Serializable;
+import java.io.IOException;
 
-public class Agent extends Item implements Serializable{
+public class Agent extends Item implements Comparable<Agent>{
     int score;
-    int num;
     Random R;
     World myworld;
     double rotation;
@@ -17,12 +22,12 @@ public class Agent extends Item implements Serializable{
     double[][] w;
     double[] neury, neurx;
     double dtdivtau , meannormw;
-    Agent(World ww, int myn)
+    
+    Agent(World ww)
     {
         super(ww);
         myworld = ww;
         dtdivtau = 1.0 / myw.TAU;
-        num = myn;
         R = myworld.R;
         score=0;
         NBNEUR = myworld.NBNEUR; 
@@ -37,6 +42,10 @@ public class Agent extends Item implements Serializable{
         speed=0.0;
         rotation=0.0;
         heading = R.nextDouble() * 2 * Math.PI;
+    }
+    public int compareTo(Agent a)
+    {
+        return Integer.signum(getScore() - a.getScore());
     }
     public void randomizeNet(){
         meannormw = 0;
@@ -70,7 +79,7 @@ public class Agent extends Item implements Serializable{
             resetNeurons();
             resetScore();
     }
-    public double getScore() { return score /*- meannormw * 15.0 */ ; }
+    public int getScore() { return score /*- meannormw * 15.0 */ ; }
     public void runNetwork()
     {
         double tempx;
@@ -171,5 +180,53 @@ public class Agent extends Item implements Serializable{
         if (x < 0)
             x += myworld.WSIZE;
     }
+    
+    public void readAgent(String fname)
+    {   
+        try{
+            System.out.println("Reading from file "+fname);
+            BufferedReader in
+                = new BufferedReader(new FileReader(fname));
+
+            for (int row=0; row < NBNEUR; row++)
+            {   
+                String strs[] = in.readLine().split(" ");
+                if (strs.length != NBNEUR)
+                    throw new RuntimeException("Data file has wrong number of neurons! (strs.length is "+strs.length+", strs[0] is "+strs[0]+", row "+row+")");
+                for (int col=0; col < NBNEUR; col++)
+                    this.w[row][col] = Double.parseDouble(strs[col]);
+            }
+            in.close();
+        }
+        catch (IOException e) {
+            e.printStackTrace(); System.out.println("Couldn't read agent from file "+fname); System.exit(0);            
+        }
+    }
+    
+    public void saveAgent(String fname)
+    {   
+        try{
+            PrintWriter writer = new PrintWriter(fname);
+            for (int row=0; row < NBNEUR; row++)
+            {   
+                for (int col=0; col < NBNEUR; col++)
+                    writer.print(Double.toString(this.w[row][col])+" "); 
+                writer.print("\n");
+            }
+            writer.close();
+        }
+        catch (IOException e) {
+            e.printStackTrace(); System.out.println("Couldn't save agent to file "+fname); System.exit(0);            
+        }
+
+    }
+    public void draw(Graphics G){
+        G.setColor(Color.red);
+            G.fillOval((int)(x)-3, (int)y-3, 7, 7);
+            G.fillOval((int)(x + 6 * Math.cos(heading))-1, 
+                       (int)(y - 6 * Math.sin(heading))-1, // minus to preserve counterclockwise (trigonometric) heading when y grows downwards..
+                        2,2);
+    }
+
 
 }
