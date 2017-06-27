@@ -3,7 +3,7 @@
 
 ## Task description
 
-An agent has access to two kinds of "preys". One kind of prey is food, while the
+An agent has access to two kinds of randomly-moving "preys". One kind of prey is food, while the
 other kind is poisonous and must be avoided. However, the agent does not know
 which is which. Furthermore, the prey types switch during each episode (food
 becomes poison and vice versa).
@@ -101,7 +101,4 @@ recent work on this, see [Wang et al.  2017](https://arxiv.org/abs/1611.05763),
 [Duan et al.  2016](https://arxiv.org/abs/1611.02779)). Evolving recurrent
 networks to do this has a long history (see [Blynel and Floreano
 2003](https://link.springer.com/chapter/10.1007/3-540-36605-9_54); [Yamauchi and
-Beer 1994](http://dl.acm.org/citation.cfm?id=189951)). I haven't seen anything
-about using this method in a foraging task, but I'd be surprised if it hasn't
-been done. 
-
+Beer 1994](http://dl.acm.org/citation.cfm?id=189951)). This code applies the idea to a foraging task for situated agents chasing mobile prey.
