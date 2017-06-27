@@ -15,8 +15,8 @@ actuators (speed and heading) and six sensors (one for each type of prey on the
 left and right, one for 'pain' and one for 'yum'). It can detect each prey type
 on either side of its body (with intensity inversely proportional to distance),
 and can  also detect whether whatever it just ate is food ('yum') or poison
-('pain'). From this, it must learn the relevant associations, chase the "good"
-type of prey and avoid the "wrong" type, and adapt when they switch.
+('pain'). From this, it must learn the relevant associations, find out which prey type is food
+and which is poison, and adapt when they switch.
 
 
 ## How to run
