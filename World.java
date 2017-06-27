@@ -22,7 +22,7 @@ public class World extends Frame {
         NBSTEPSPEREVAL = 10000,  // Duration of an evaluation
         POPSIZE = 100,           // Number of agents in the population
         NBBEST = 20,            // How many of the best agents are kept from each generation to the next
-        SEED = 0, // Random seed
+        SEED = 3, // Random seed
         POISONFIRSTHALF = 1, // Half of the foodbits are poison; is it 1st or 2nd half?
         NBNEUR = 25; // Number of neurons
     double FOODSPEED = 1.0,  // The speed of the food/poison items.

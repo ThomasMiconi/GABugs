@@ -59,17 +59,16 @@ generations.
 
 ## How to run
 
-You need a Java interpreter.  
-Simply run  `java World`.  This will start the genetic algorithm but will not produce any graphical output. After each generation, the current best
-agent will be stored in a file called 'bestagentXXX.txt' (wher 'XXX' is a bunch of
-parameter values). To visualize
+You need a Java interpreter.  Simply run  `java World`.  This will start the
+genetic algorithm but will not produce any graphical output. After each
+generation, the current best agent will be stored in a file called
+'bestagentXXX.txt' (where 'XXX' is a bunch of parameter values). To visualize
 this agent, run `java World FILENAME bestagentXXX.txt`. This will start the
-graphical interface and allow you to observe the agent's behavior.
-Be sure to press the + and - buttons to increase
-or decrease the refreshing time (reduce refreshing time to 0 for maximum
-speed).
+graphical interface and allow you to observe the agent's behavior.  Be sure to
+press the + and - buttons to increase or decrease the refreshing time (reduce
+refreshing time to 0 for maximum speed).
 
-The code is written in simple Java to encourage tinkering, so fire up your
+The code is written in simple Java to encourage tinkering. Fire up your
 editor and code up something cool!
 
 To recompile the Java bytecode, simply run `javac World.java`. If
@@ -79,12 +78,12 @@ to force a full rebuild).
 
 ## Single-agent vs. populations
 
-There are two branches in this repository. The main brance (`master`) evolves
+There are two branches in this repository. The main branch (`master`) evolves
 single agents. The other branch (`Populations`) evolves "swarms" of agents,
-called Populations. By default, those populations only contain one agent and are
-entirely equivalent to single-agent evolution. However, they provide the
-infrastructure for future experiments in evolving collaborative multi-agent
-systems.
+called Populations (yes, this is confusing). By default, those populations only
+contain one agent and are entirely equivalent to single-agent evolution.
+However, they provide the infrastructure for future experiments in evolving
+collaborative multi-agent systems.
 
 
 ## Related work
