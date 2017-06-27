@@ -58,10 +58,6 @@ public class MyFrame extends Frame implements ActionListener {
         setLayout(new FlowLayout());  
         pack();
         setVisible(true);  
-        /*
-        thrd = new Thread(this);
-        thrd.start();
-        */
     }         
     public void actionPerformed(ActionEvent e) {
         // The buttons control the waiting delay between refreshes.

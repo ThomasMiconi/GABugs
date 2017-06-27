@@ -29,7 +29,7 @@ public class Population implements Comparable<Population>{
     {
         int s=0;
         for (int n=0; n < pop.length; n++)
-            s += pop[n].score;
+            s += pop[n].getScore();
         return s;
     }
     public void resetScores()

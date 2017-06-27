@@ -3,7 +3,7 @@ import numpy as np
 import glob
 
 #strs = glob.glob('results_sensewhichhalf_nodirectio*_SEED0.txt')
-strs = glob.glob('results_fullsens_*_SEED0.txt')
+strs = glob.glob('results_fullsens_*_SEED0.txt') + glob.glob('results_scoresens_*_SEED0.txt')
 
 plt.ion()
 plt.clf()

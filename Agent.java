@@ -1,5 +1,5 @@
 // This class controls the agents.
-// NOTE: Much of the spatial logic is inherited from class Item!
+// NOTE: Much of the spatial logic is contained in class Item, which this clas inherits from.
 
 import java.util.Random;
 import java.io.Serializable;
@@ -16,7 +16,7 @@ public class Agent extends Item implements Serializable{
     double MUTATIONSIZE, MAXW;
     double[][] w;
     double[] neury, neurx;
-    double dtdivtau ;;
+    double dtdivtau , meannormw;
     Agent(World ww, int myn)
     {
         super(ww);
@@ -39,10 +39,14 @@ public class Agent extends Item implements Serializable{
         heading = R.nextDouble() * 2 * Math.PI;
     }
     public void randomizeNet(){
+        meannormw = 0;
         for (int ii=0; ii < NBNEUR; ii++)
-            for (int jj=0; jj < NBNEUR; jj++)
+            for (int jj=0; jj < NBNEUR; jj++){
                 w[ii][jj] = (2.0 * R.nextDouble() - 1.0) ;
                 //w[ii][jj] = (2.0 * R.nextDouble() - 1.0) / Math.sqrt((double)NBNEUR);
+                meannormw += Math.abs(w[ii][jj]);
+            }
+        meannormw /= (NBNEUR * NBNEUR);
     }
     public void resetNeurons() { 
         for (int n=0; n<NBNEUR; n++){
@@ -58,6 +62,7 @@ public class Agent extends Item implements Serializable{
         for (int ii=0; ii < NBNEUR; ii++)
             for (int jj=0; jj < NBNEUR; jj++)
                 w[ii][jj] = A.w[ii][jj];
+        meannormw = A.meannormw;
     }
     public void initialize()
     {
@@ -65,6 +70,7 @@ public class Agent extends Item implements Serializable{
             resetNeurons();
             resetScore();
     }
+    public double getScore() { return score /*- meannormw * 15.0 */ ; }
     public void runNetwork()
     {
         double tempx;
@@ -73,6 +79,7 @@ public class Agent extends Item implements Serializable{
             tempx = 0;
             for (int col=0; col < NBNEUR; col++)
                 if ((row > 2) || (col < 2 || col > 9)) // The actuators can't receive direct sensor input!
+                //if ((row > 2) || (col > 9)) // The actuators can't receive direct sensor or actuator input!
                     tempx += w[row][col] * neury[col];
             neurx[row] += dtdivtau * (tempx - neurx[row]);
         }
@@ -81,6 +88,7 @@ public class Agent extends Item implements Serializable{
     }
     public void mutate()
     {
+        meannormw = 0;
         for (int ii=0; ii < NBNEUR; ii++)
             for (int jj=0; jj < NBNEUR; jj++)
             {
@@ -97,7 +105,9 @@ public class Agent extends Item implements Serializable{
                     w[ii][jj] = MAXW;
                 if (w[ii][jj] < -MAXW)
                     w[ii][jj] = -MAXW;
+                meannormw += w[ii][jj];
             }
+        meannormw /= (NBNEUR * NBNEUR);
     }
 
     // This function controls the agent's behavior.
@@ -108,6 +118,7 @@ public class Agent extends Item implements Serializable{
         neury[6] = 2.0 * R.nextDouble() - 1.0;
         neury[7] = 1.0;
         neury[8] = 0.0; neury[9] = 0.0; // 2.0 * (myworld.POISONFIRSTHALF - .5);
+        //neury[8] = (double)score / 200.0; neury[9] = (double)score / 20.0;
         neury[2] = 0.0; neury[3] = 0.0; neury[4] = 0.0; neury[5] = 0.0;
         // Check where the food bits (and poison bits!) are, whether we have eaten one, and fill
         // the sensors with appropriate values:
