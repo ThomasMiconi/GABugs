@@ -1,4 +1,4 @@
-#Evolving reinforcement learning in a foraging agent
+# Evolving reinforcement learning in a foraging agent
 
 
 ## Task description
@@ -8,13 +8,15 @@ other kind is poisonous and must be avoided. However, the agent does not know
 which is which. Furthermore, the prey types switch during each episode (food
 becomes poison and vice versa).
 
+![Bugs UI](https://github.com/ThomasMiconi/Bugs/blob/master/World.gif)
+
 The agent is controlled by a simple recurrent neural network, with two
 actuators (speed and heading) and six sensors (one for each type of prey on the
 left and right, one for 'pain' and one for 'yum'). It can detect each prey type
 on either side of its body (with intensity inversely proportional to distance),
 and can  also detect whether whatever it just ate is food ('yum') or poison
 ('pain'). From this, it must learn the relevant associations, chase the "good"
-type of prey and void the "wrong" type, and adapt when they switch.
+type of prey and avoid the "wrong" type, and adapt when they switch.
 
 ## Evolution
 
@@ -25,8 +27,8 @@ total number of food minus poison eaten). When the entire population has been
 evaluated, select the 20% best, and replenish the rest of the population with
 mutated copies of these 20%. Mutation occurs by adding a Cauchy-distributed
 number to 5% of the network's weights. There is no crossover and parents for
-each new individual are chosen randomly from the 20%, inorder to maximize
-exploration. Another important aspect is that we disallow direct connections
+each new individual are chosen randomly from the 20%, in order to maximize
+exploration. In addition, we disallow direct connections
 from input sensors to actuators. This forces the sensors to take input from
 other neurons, which seems to facilitate the discovery of the relevant
 computations.
@@ -37,13 +39,13 @@ It turns out that there are two main strategies to solve this problem: a workabl
 
 The suboptimal
 strategy is to follow one type of prey, and if too much pain is detected,
-abandon any chasing and simply spin around; while spinning (since you will randomly catch some preys),if a lot of 'yum' is detected,
+abandon any chasing and simply spin around; while spinning (since you will randomly catch some preys), if a lot of 'yum' is detected,
 resume the chasing of the preferred prey type.
 
 This strategy works because while spinning, you get random (and thus roughly
 equal) amounts of poison and food, while when chasing you will get a lot more
 preys of your preferred type. The pain/'yum' detectors can tell you whether it
-is currently better to chase or spin, Importantly, you don't need to switch
+is currently better to chase or spin. Importantly, you don't need to switch
 your preferred prey - just whether you chase it or not. As a result, this
 strategy is simple, and evolves readily in every run.
 
@@ -57,23 +59,31 @@ generations.
 
 ## How to run
 
-You need a Java interpreter.  
-Simply run  `java World VISUAL 0`.  This will start the genetic algorithm but will not produce any graphical output. After each generation, the current best
-agent will be stored in a file called 'bestpopXXX.txt' (wher 'XXX' is a bunch of
-parameter values). To visualize
-this agent, run `java World FILENAME bestpopXXX.txt`. This will start the
-graphical interface and allow you to observe the agent's behavior.
-Be sure to press the + and - buttons to increase
-or decrease the refreshing time (reduce refreshing time to 0 for maximum
-speed).
+You need a Java interpreter.  Simply run  `java World`.  This will start the
+genetic algorithm but will not produce any graphical output. After each
+generation, the current best agent will be stored in a file called
+'bestagentXXX.txt' (where 'XXX' is a bunch of parameter values). To visualize
+this agent, run `java World FILENAME bestagentXXX.txt`. This will start the
+graphical interface and allow you to observe the agent's behavior.  Be sure to
+press the + and - buttons to increase or decrease the refreshing time (reduce
+refreshing time to 0 for maximum speed).
 
-The code is written in simple Java to encourage tinkering, so fire up your
+The code is written in simple Java to encourage tinkering. Fire up your
 editor and code up something cool!
 
 To recompile the Java bytecode, simply run `javac World.java`. If
 you modify any other Java source file than World.java, you need to recompile
 them explicitly too (or alternatively, just run `rm *.class; javac World.java`
 to force a full rebuild). 
+
+## Single-agent vs. populations
+
+There are two branches in this repository. The main branch (`master`) evolves
+single agents. The other branch (`Populations`) evolves "swarms" of agents,
+called Populations (yes, this is confusing). By default, those populations only
+contain one agent and are entirely equivalent to single-agent evolution.
+However, they provide the infrastructure for future experiments in evolving
+collaborative multi-agent systems.
 
 
 ## Related work
