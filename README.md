@@ -1,4 +1,4 @@
-#Evolving reinforcement learning in a foraging agent
+# Evolving reinforcement learning in a foraging agent
 
 
 ## Task description
@@ -7,6 +7,8 @@ An agent has access to two kinds of "preys". One kind of prey is food, while the
 other kind is poisonous and must be avoided. However, the agent does not know
 which is which. Furthermore, the prey types switch during each episode (food
 becomes poison and vice versa).
+
+![Bugs UI](https://github.com/ThomasMiconi/Bugs/blob/master/World.gif)
 
 The agent is controlled by a simple recurrent neural network, with two
 actuators (speed and heading) and six sensors (one for each type of prey on the
