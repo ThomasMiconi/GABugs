@@ -62,10 +62,10 @@ public class MyFrame extends Frame implements ActionListener {
     public void actionPerformed(ActionEvent e) {
         // The buttons control the waiting delay between refreshes.
         if(e.getSource()==b1){  
-            myWorld.delay+=50;  
+            myWorld.delay+=20;  
         }else if(e.getSource()==b2){  
-            if (myWorld.delay >= 50)
-                myWorld.delay-=50;  
+            if (myWorld.delay >= 20)
+                myWorld.delay-=20;  
         }else if(e.getSource()==b3){  
             myWorld.POISONFIRSTHALF = 1 - myWorld.POISONFIRSTHALF;
         }            

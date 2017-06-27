@@ -45,7 +45,7 @@ public class World extends Frame {
         int numarg = 0;
         if (args.length % 2 != 0) { throw new RuntimeException("Each argument must be provided with its value"); }
         while (numarg < args.length) {
-            if (args[numarg].equals( "FILENAME")) { VISUAL = 1 ; FILENAME  = args[numarg+1]; delay=50; }
+            if (args[numarg].equals( "FILENAME")) { VISUAL = 1 ; FILENAME  = args[numarg+1]; delay=40; }
             if (args[numarg].equals( "NBBEST")) NBBEST = Integer.parseInt(args[numarg+1]);
             if (args[numarg].equals( "VISUAL")) { VISUAL  = Integer.parseInt(args[numarg+1]); if ((VISUAL !=0) && (VISUAL != 1)) throw new RuntimeException("VISUAL must be 0 or 1!");}
             if (args[numarg].equals( "NBSTEPSPEREVAL")) NBSTEPSPEREVAL = Integer.parseInt(args[numarg+1]);
@@ -75,6 +75,7 @@ public class World extends Frame {
     }         
 
     public static void main(String[] args) {  
+        System.out.println("Starting...");
         World tf = new World(args);  
         tf.run();
 
