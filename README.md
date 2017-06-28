@@ -1,4 +1,4 @@
-# Evolving reinforcement learning in a foraging agent
+# Evolving recurrent neural networks for reinforcement learning and adaptive foraging
 
 
 ## Task description
@@ -18,36 +18,9 @@ and can  also detect whether whatever it just ate is food ('yum') or poison
 ('pain'). From this, it must learn the relevant associations, find out which prey type is food
 and which is poison, and adapt when they switch.
 
-
-## How to run
-
-You need a Java interpreter. To observe a pre-evolved agent, just run `java
-World FILENAME bestagent_default.txt`. This will start the GUI program and only
-display this saved agent, without
-any evolution going on. You can 'switch' which type of prey is poison or food by
-clicking the button - and see how quickly the agent adapts.
-
-To run the actual genetic algorithm and evolve a new agent, simply run  `java
-World`.  This will start the genetic algorithm but will not produce any
-graphical output. After each generation, the current best agent will be stored
-in a file called 'bestagentXXX.txt' (where 'XXX' is a bunch of parameter
-values). To visualize this agent, run `java World FILENAME bestagentXXX.txt`.
-This will start the graphical interface and allow you to observe the agent's
-behavior.  You can press the + and - buttons to increase or decrease the
-refreshing time (reduce refreshing time to 0 for maximum speed). With default
-parameters, the algorithm starts to increase performance by ~450 generations
-and produces a near-optimal strategy within ~1400 generations. 
-
-The code is written in simple Java to encourage tinkering. Fire up your
-editor and code away!
-
-To recompile the Java bytecode, simply run `javac World.java`. If
-you modify any other Java source file than World.java, you need to recompile
-them explicitly too (or alternatively, just run `rm *.class; javac World.java`
-to force a full rebuild). 
-
 ## Evolution
 
+The neural network that controls the agent is designed by evolution.
 The evolutionary algorithm is a simple real-valued genetic algorithm (inspired
 by Karl Sims): Evaluate each agent in turn by letting them interact with the
 environment for 10,000 timesteps and calculate their total score (simply the
@@ -81,6 +54,34 @@ The optimal strategy is simply to switch the type of prey you are chasing
 depending on pain/'yum' inputs. This strategy yields much higher scores, but is
 more complex to implement (it requires a true 'cognitive switch' rather than
 simply a brake on motor outputs) and thus harder to evolve.
+
+## How to run
+
+You need a Java interpreter. To observe a pre-evolved agent, just run `java
+World FILENAME bestagent_default.txt`. This will start the GUI program and only
+display this saved agent, without
+any evolution going on. You can 'switch' which type of prey is poison or food by
+clicking the button - and see how quickly the agent adapts.
+
+To run the actual genetic algorithm and evolve a new agent, simply run  `java
+World`.  This will start the genetic algorithm but will not produce any
+graphical output. After each generation, the current best agent will be stored
+in a file called 'bestagentXXX.txt' (where 'XXX' is a bunch of parameter
+values). To visualize this agent, run `java World FILENAME bestagentXXX.txt`.
+This will start the graphical interface and allow you to observe the agent's
+behavior.  You can press the + and - buttons to increase or decrease the
+refreshing time (reduce refreshing time to 0 for maximum speed). With default
+parameters, the algorithm starts to increase performance by ~450 generations
+and produces a near-optimal strategy within ~1400 generations. 
+
+The code is written in simple Java to encourage tinkering. Fire up your
+editor and code away!
+
+To recompile the Java bytecode, simply run `javac World.java`. If
+you modify any other Java source file than World.java, you need to recompile
+them explicitly too (or alternatively, just run `rm *.class; javac World.java`
+to force a full rebuild). 
+
 
 
 ## Single-agent vs. populations
